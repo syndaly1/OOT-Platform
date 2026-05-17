@@ -5,12 +5,14 @@ import "os"
 type Config struct {
 	GRPCPort    string
 	DatabaseURL string
+	NATSURL     string
 }
 
 func LoadConfig() *Config {
 	return &Config{
 		GRPCPort:    getEnv("CONTENT_GRPC_PORT", "50052"),
 		DatabaseURL: getEnv("CONTENT_DATABASE_URL", "postgres://postgres:postgres@localhost:5433/content_db?sslmode=disable"),
+		NATSURL:     getEnv("NATS_URL", "nats://localhost:4222"),
 	}
 }
 
