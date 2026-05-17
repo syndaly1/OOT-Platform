@@ -1,0 +1,203 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "streaming-platform/proto/auth";
+
+// ───────────────────────────────
+// AUTH SERVICE
+// ───────────────────────────────
+
+service AuthService {
+  // Auth
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc ForgotPassword(ForgotPasswordRequest) returns (ForgotPasswordResponse);
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+
+  // Account
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
+  rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse);
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+
+  // Profiles
+  rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
+  rpc GetProfiles(GetProfilesRequest) returns (GetProfilesResponse);
+  rpc GetProfileById(GetProfileByIdRequest) returns (GetProfileByIdResponse);
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+  rpc DeleteProfile(DeleteProfileRequest) returns (DeleteProfileResponse);
+}
+
+// ───────────────────────────────
+// MESSAGES — AUTH
+// ───────────────────────────────
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string username = 3;
+}
+
+message RegisterResponse {
+  string account_id = 1;
+  string message = 2;
+}
+
+message VerifyEmailRequest {
+  string token = 1;
+}
+
+message VerifyEmailResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  string account_id = 3;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message LogoutResponse {
+  bool success = 1;
+}
+
+message ForgotPasswordRequest {
+  string email = 1;
+}
+
+message ForgotPasswordResponse {
+  string message = 1;
+}
+
+message ResetPasswordRequest {
+  string token = 1;
+  string new_password = 2;
+}
+
+message ResetPasswordResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ───────────────────────────────
+// MESSAGES — ACCOUNT
+// ───────────────────────────────
+
+message GetAccountRequest {
+  string account_id = 1;
+}
+
+message GetAccountResponse {
+  string account_id = 1;
+  string email = 2;
+  string username = 3;
+  bool is_verified = 4;
+  string created_at = 5;
+}
+
+message UpdateAccountRequest {
+  string account_id = 1;
+  string username = 2;
+}
+
+message UpdateAccountResponse {
+  bool success = 1;
+}
+
+message DeleteAccountRequest {
+  string account_id = 1;
+}
+
+message DeleteAccountResponse {
+  bool success = 1;
+}
+
+// ───────────────────────────────
+// MESSAGES — PROFILES
+// ───────────────────────────────
+
+enum ProfileType {
+  ADULT = 0;
+  TEEN = 1;
+  KID = 2;
+}
+
+message CreateProfileRequest {
+  string account_id = 1;
+  string name = 2;
+  ProfileType type = 3;
+  string language = 4;
+  string avatar = 5;
+}
+
+message CreateProfileResponse {
+  string profile_id = 1;
+  string message = 2;
+}
+
+message GetProfilesRequest {
+  string account_id = 1;
+}
+
+message GetProfilesResponse {
+  repeated Profile profiles = 1;
+}
+
+message GetProfileByIdRequest {
+  string profile_id = 1;
+}
+
+message GetProfileByIdResponse {
+  Profile profile = 1;
+}
+
+message UpdateProfileRequest {
+  string profile_id = 1;
+  string name = 2;
+  string language = 3;
+  string avatar = 4;
+}
+
+message UpdateProfileResponse {
+  bool success = 1;
+}
+
+message DeleteProfileRequest {
+  string profile_id = 1;
+}
+
+message DeleteProfileResponse {
+  bool success = 1;
+}
+
+message Profile {
+  string profile_id = 1;
+  string account_id = 2;
+  string name = 3;
+  ProfileType type = 4;
+  string language = 5;
+  string avatar = 6;
+  string created_at = 7;
+}

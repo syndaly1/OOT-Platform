@@ -1,0 +1,167 @@
+version: '3.8'
+
+services:
+
+  # ── Databases ──
+
+  auth-postgres:
+    image: postgres:16-alpine
+    container_name: auth-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  content-postgres:
+    image: postgres:16-alpine
+    container_name: content-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: content_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - content-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  playback-postgres:
+    image: postgres:16-alpine
+    container_name: playback-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: playback_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - playback-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ──
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── NATS ──
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["--http_port", "8222"]
+
+  # ── Services ──
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    env_file:
+      - .env
+    environment:
+      AUTH_DB_HOST: auth-postgres
+      AUTH_DB_PORT: 5432
+      REDIS_HOST: redis
+      NATS_URL: nats://nats:4222
+    ports:
+      - "50051:50051"
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+
+  content-service:
+    build:
+      context: ./services/content-service
+      dockerfile: Dockerfile
+    container_name: content-service
+    environment:
+      CONTENT_DB_HOST: content-postgres
+      CONTENT_DB_PORT: 5432
+      REDIS_HOST: redis
+      NATS_URL: nats://nats:4222
+    ports:
+      - "50052:50052"
+    depends_on:
+      content-postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+
+  playback-service:
+    build:
+      context: ./services/playback-service
+      dockerfile: Dockerfile
+    container_name: playback-service
+    environment:
+      PLAYBACK_DB_HOST: playback-postgres
+      PLAYBACK_DB_PORT: 5432
+      REDIS_HOST: redis
+      NATS_URL: nats://nats:4222
+    ports:
+      - "50053:50053"
+    depends_on:
+      playback-postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    environment:
+      AUTH_SERVICE_URL: auth-service:50051
+      CONTENT_SERVICE_URL: content-service:50052
+      PLAYBACK_SERVICE_URL: playback-service:50053
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      - content-service
+      - playback-service
+
+volumes:
+  auth-postgres-data:
+  content-postgres-data:
+  playback-postgres-data:
+  redis-data:
