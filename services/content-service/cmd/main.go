@@ -7,6 +7,7 @@ import (
 
 	"content-service/internal/config"
 	contentgrpc "content-service/internal/delivery/grpc"
+	"content-service/internal/events"
 	"content-service/internal/repository/postgres"
 	"content-service/internal/usecase"
 	"content-service/pkg/contentpb"
@@ -28,10 +29,17 @@ func main() {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
+	publisher, err := events.NewPublisher(cfg.NATSURL)
+	if err != nil {
+		log.Printf("failed to connect to NATS: %v", err)
+	} else {
+		defer publisher.Close()
+	}
+
 	contentRepo := postgres.NewContentPostgresRepository(db)
 	episodeRepo := postgres.NewEpisodePostgresRepository(db)
 
-	contentUsecase := usecase.NewContentUsecase(contentRepo)
+	contentUsecase := usecase.NewContentUsecase(contentRepo, publisher)
 	episodeUsecase := usecase.NewEpisodeUsecase(episodeRepo)
 
 	handler := contentgrpc.NewContentHandler(contentUsecase, episodeUsecase)
