@@ -145,3 +145,32 @@ func (h *PlaybackHandler) MarkCompleted(
 		Message: "content marked as completed",
 	}, nil
 }
+
+func (h *PlaybackHandler) GetResumeData(
+	ctx context.Context,
+	req *pb.GetResumeDataRequest,
+) (*pb.GetResumeDataResponse, error) {
+
+	session, err := h.usecase.GetResumeData(
+		ctx,
+		req.ProfileId,
+		req.ContentId,
+		req.EpisodeId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	shouldShowContinue := session.CurrentPositionSec > 0 && !session.Completed
+
+	return &pb.GetResumeDataResponse{
+		ProfileId:          session.ProfileID,
+		ContentId:          session.ContentID,
+		EpisodeId:          session.EpisodeID,
+		LastPositionSec:    session.CurrentPositionSec,
+		Completed:          session.Completed,
+		ShouldShowContinue: shouldShowContinue,
+		IntroStartSec:      0,
+		IntroEndSec:        82,
+	}, nil
+}

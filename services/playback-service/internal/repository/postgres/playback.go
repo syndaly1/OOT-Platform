@@ -74,9 +74,7 @@ func (r *PlaybackRepository) GetProgress(
 	episodeID string,
 ) (*domain.PlaybackSession, error) {
 	query := `
-		SELECT profile_id, content_id, episode_id,
-		       current_position_sec, duration_sec,
-		       watched_percent, completed
+		SELECT profile_id, content_id, episode_id, current_position_sec, duration_sec, watched_percent, completed
 		FROM watch_progress
 		WHERE profile_id=$1 AND content_id=$2 AND episode_id=$3
 	`
@@ -114,9 +112,7 @@ func (r *PlaybackRepository) MarkCompleted(ctx context.Context, profileID, conte
 
 func (r *PlaybackRepository) GetContinueWatching(ctx context.Context, profileID string) ([]*domain.PlaybackSession, error) {
 	query := `
-		SELECT profile_id, content_id, episode_id,
-		       current_position_sec, duration_sec,
-		       watched_percent, completed
+		SELECT profile_id, content_id, episode_id, current_position_sec, duration_sec, watched_percent, completed
 		FROM watch_progress
 		WHERE profile_id=$1 AND completed=false AND current_position_sec > 0
 		ORDER BY updated_at DESC
@@ -151,4 +147,44 @@ func (r *PlaybackRepository) GetContinueWatching(ctx context.Context, profileID 
 	}
 
 	return sessions, nil
+}
+
+func (r *PlaybackRepository) GetResumeData(
+	ctx context.Context,
+	profileID string,
+	contentID string,
+	episodeID string,
+) (*domain.PlaybackSession, error) {
+
+	query := `
+		SELECT profile_id, content_id, episode_id,
+		       current_position_sec, duration_sec,
+		       watched_percent, completed
+		FROM watch_progress
+		WHERE profile_id=$1 AND content_id=$2 AND episode_id=$3
+	`
+
+	var session domain.PlaybackSession
+
+	err := r.db.QueryRow(
+		ctx,
+		query,
+		profileID,
+		contentID,
+		episodeID,
+	).Scan(
+		&session.ProfileID,
+		&session.ContentID,
+		&session.EpisodeID,
+		&session.CurrentPositionSec,
+		&session.DurationSec,
+		&session.WatchedPercent,
+		&session.Completed,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &session, nil
 }

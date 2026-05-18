@@ -62,3 +62,13 @@ func (u *PlaybackUsecase) MarkCompleted(
 ) error {
 	return u.repo.MarkCompleted(ctx, profileID, contentID, episodeID)
 }
+
+func (u *PlaybackUsecase) GetResumeData(
+	ctx context.Context,
+	profileID string,
+	contentID string,
+	episodeID string,
+) (*domain.PlaybackSession, error) {
+
+	return u.repo.GetResumeData(ctx, profileID, contentID, episodeID)
+}
