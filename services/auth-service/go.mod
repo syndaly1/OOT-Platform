@@ -3,8 +3,6 @@ module streaming-platform/auth-service
 go 1.26.2
 
 require (
-	streaming-platform v0.0.0
-
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0
@@ -13,7 +11,8 @@ require (
 	github.com/redis/go-redis/v9 v9.19.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.51.0
-	google.golang.org/grpc v1.81.0
+	google.golang.org/grpc v1.81.1
+	streaming-platform v0.0.0
 )
 
 require (

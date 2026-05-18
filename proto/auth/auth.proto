@@ -2,7 +2,8 @@ syntax = "proto3";
 
 package auth;
 
-option go_package = "streaming-platform/proto/auth";
+option go_package = "streaming-platform/proto/auth;auth";
+
 
 // ───────────────────────────────
 // AUTH SERVICE
