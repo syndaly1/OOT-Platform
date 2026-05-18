@@ -1,0 +1,17 @@
+.env
+Icon
+.DS_Store
+node_modules
+dist
+build
+coverage
+logs
+*.log
+proto/DS_Store
+proto/node_modules
+proto/dist
+proto/build
+proto/coverage
+proto/logs
+proto/*.log
+services/.DS_Store
