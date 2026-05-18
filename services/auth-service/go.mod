@@ -1,6 +1,6 @@
 module streaming-platform/auth-service
 
-go 1.26.2
+go 1.25.4
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -11,7 +11,8 @@ require (
 	github.com/redis/go-redis/v9 v9.19.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.51.0
-	google.golang.org/grpc v1.81.0
+	google.golang.org/grpc v1.81.1
+	streaming-platform v0.0.0
 )
 
 require (
@@ -30,3 +31,5 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace streaming-platform => ../..

@@ -1,9 +1,4 @@
-version: '3.8'
-
 services:
-
-  # ── Databases ──
-
   auth-postgres:
     image: postgres:16-alpine
     container_name: auth-postgres
@@ -55,8 +50,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Redis ──
-
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -70,8 +63,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── NATS ──
-
   nats:
     image: nats:2.10-alpine
     container_name: nats
@@ -80,18 +71,22 @@ services:
       - "8222:8222"
     command: ["--http_port", "8222"]
 
-  # ── Services ──
-
   auth-service:
     build:
-      context: ./services/auth-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/auth-service/Dockerfile
     container_name: auth-service
     env_file:
       - .env
     environment:
       AUTH_DB_HOST: auth-postgres
       AUTH_DB_PORT: 5432
+      AUTH_DB_USER: postgres
+      AUTH_DB_PASSWORD: postgres
+      AUTH_DB_NAME: auth_db
+      AUTH_DB_URL: postgres://postgres:postgres@auth-postgres:5432/auth_db?sslmode=disable
+      AUTH_DATABASE_URL: postgres://postgres:postgres@auth-postgres:5432/auth_db?sslmode=disable
+      DATABASE_URL: postgres://postgres:postgres@auth-postgres:5432/auth_db?sslmode=disable
       REDIS_HOST: redis
       NATS_URL: nats://nats:4222
     ports:
@@ -135,6 +130,7 @@ services:
       PLAYBACK_DB_USER: postgres
       PLAYBACK_DB_PASSWORD: postgres
       PLAYBACK_DB_NAME: playback_db
+      PLAYBACK_DB_URL: postgres://postgres:postgres@playback-postgres:5432/playback_db?sslmode=disable
       REDIS_HOST: redis
       NATS_URL: nats://nats:4222
     ports:
@@ -149,8 +145,8 @@ services:
 
   api-gateway:
     build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
     container_name: api-gateway
     environment:
       AUTH_SERVICE_URL: auth-service:50051

@@ -29,14 +29,15 @@ message Content {
   string id = 1;
   string title = 2;
   string description = 3;
-  string type = 4;
-  string genre = 5;
-  int32 release_year = 6;
-  double rating = 7;
-  bool is_featured = 8;
-  bool is_trending = 9;
-  string created_at = 10;
-  string updated_at = 11;
+  string poster_url = 4;
+  string type = 5;
+  string genre = 6;
+  int32 release_year = 7;
+  double rating = 8;
+  bool is_featured = 9;
+  bool is_trending = 10;
+  string created_at = 11;
+  string updated_at = 12;
 }
 
 message Episode {
@@ -56,12 +57,13 @@ message Episode {
 message CreateContentRequest {
   string title = 1;
   string description = 2;
-  string type = 3;
-  string genre = 4;
-  int32 release_year = 5;
-  double rating = 6;
-  bool is_featured = 7;
-  bool is_trending = 8;
+  string poster_url = 3;
+  string type = 4;
+  string genre = 5;
+  int32 release_year = 6;
+  double rating = 7;
+  bool is_featured = 8;
+  bool is_trending = 9;
 }
 
 message GetContentRequest {
@@ -77,12 +79,13 @@ message UpdateContentRequest {
   string id = 1;
   string title = 2;
   string description = 3;
-  string type = 4;
-  string genre = 5;
-  int32 release_year = 6;
-  double rating = 7;
-  bool is_featured = 8;
-  bool is_trending = 9;
+  string poster_url = 4;
+  string type = 5;
+  string genre = 6;
+  int32 release_year = 7;
+  double rating = 8;
+  bool is_featured = 9;
+  bool is_trending = 10;
 }
 
 message DeleteContentRequest {

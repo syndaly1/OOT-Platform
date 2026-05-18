@@ -12,9 +12,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 )
-
-// ── Mocks ──
 
 type mockAccountRepo struct{ mock.Mock }
 
@@ -102,8 +102,6 @@ func (m *mockNATS) Publish(subject string, data []byte) error {
 	return m.Called(subject, data).Error(0)
 }
 
-// ── helpers ──
-
 func newTestAuthUC(
 	accountRepo *mockAccountRepo,
 	rtRepo *mockRefreshTokenRepo,
@@ -120,8 +118,6 @@ func newTestAuthUC(
 	}
 	return usecase.NewAuthUsecase(accountRepo, rtRepo, evRepo, prRepo, nats, cfg)
 }
-
-// ── Tests ──
 
 func TestRegister_Success(t *testing.T) {
 	accountRepo := new(mockAccountRepo)
@@ -181,12 +177,13 @@ func TestLogin_Success(t *testing.T) {
 	prRepo := new(mockPasswordResetRepo)
 	nats := new(mockNATS)
 
-	// bcrypt hash of "password123"
-	hashedPwd := "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
+	hashedPwd, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+
 	account := &domain.Account{
 		ID:         "acc-123",
 		Email:      "test@test.com",
-		Password:   hashedPwd,
+		Password:   string(hashedPwd),
 		IsVerified: true,
 	}
 
@@ -197,10 +194,15 @@ func TestLogin_Success(t *testing.T) {
 
 	out, err := uc.Login(context.Background(), "test@test.com", "password123")
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+
 	assert.NotEmpty(t, out.AccessToken)
 	assert.NotEmpty(t, out.RefreshToken)
 	assert.Equal(t, "acc-123", out.AccountID)
+
+	accountRepo.AssertExpectations(t)
+	rtRepo.AssertExpectations(t)
 }
 
 func TestLogin_NotVerified(t *testing.T) {
@@ -234,22 +236,27 @@ func TestLogin_WrongPassword(t *testing.T) {
 	prRepo := new(mockPasswordResetRepo)
 	nats := new(mockNATS)
 
-	hashedPwd := "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
+	hashedPwd, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+
 	account := &domain.Account{
 		ID:         "acc-123",
 		Email:      "test@test.com",
-		Password:   hashedPwd,
+		Password:   string(hashedPwd),
 		IsVerified: true,
 	}
+
 	accountRepo.On("GetByEmail", mock.Anything, "test@test.com").Return(account, nil)
 
 	uc := newTestAuthUC(accountRepo, rtRepo, evRepo, prRepo, nats)
 
 	out, err := uc.Login(context.Background(), "test@test.com", "wrongpassword")
 
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, out)
 	assert.Equal(t, "invalid credentials", err.Error())
+
+	accountRepo.AssertExpectations(t)
 }
 
 func TestVerifyEmail_Success(t *testing.T) {

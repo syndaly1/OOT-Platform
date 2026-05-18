@@ -1,25 +1,55 @@
-import { allItems, collectionDataMap, getItemById } from "../data/catalog";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
-function delay(ms = 250) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+async function request(path) {
+  const response = await fetch(`${API_BASE_URL}${path}`);
 
-export async function getContentById(id) {
-  await delay();
-  return getItemById(id);
+  if (!response.ok) {
+    throw new Error(`Content API error: ${response.status}`);
+  }
+
+  return response.json();
 }
 
 export async function getAllContent() {
-  await delay();
-  return allItems;
+  return request("/content");
+}
+
+export async function getContentById(id) {
+  return request(`/content/${id}`);
+}
+
+export async function searchContent(query) {
+  return request(`/content/search?q=${encodeURIComponent(query)}`);
+}
+
+export async function getContentByGenre(genre) {
+  return request(`/content/genre/${encodeURIComponent(genre)}`);
+}
+
+export async function getTrendingContent() {
+  return request("/content/trending");
+}
+
+export async function getFeaturedContent() {
+  return request("/content/featured");
+}
+
+export async function getEpisodesByContent(contentId) {
+  return request(`/content/${contentId}/episodes`);
 }
 
 export async function getCollection(collection) {
-  await delay();
-
   if (!collection || collection === "all") {
-    return allItems;
+    return getAllContent();
   }
 
-  return collectionDataMap[collection] || [];
+  if (collection === "trending") {
+    return getTrendingContent();
+  }
+
+  if (collection === "featured") {
+    return getFeaturedContent();
+  }
+
+  return getContentByGenre(collection);
 }

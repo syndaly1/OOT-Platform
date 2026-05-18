@@ -26,14 +26,15 @@ type Content struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Type          string                 `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
-	Genre         string                 `protobuf:"bytes,5,opt,name=genre,proto3" json:"genre,omitempty"`
-	ReleaseYear   int32                  `protobuf:"varint,6,opt,name=release_year,json=releaseYear,proto3" json:"release_year,omitempty"`
-	Rating        float64                `protobuf:"fixed64,7,opt,name=rating,proto3" json:"rating,omitempty"`
-	IsFeatured    bool                   `protobuf:"varint,8,opt,name=is_featured,json=isFeatured,proto3" json:"is_featured,omitempty"`
-	IsTrending    bool                   `protobuf:"varint,9,opt,name=is_trending,json=isTrending,proto3" json:"is_trending,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     string                 `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	PosterUrl     string                 `protobuf:"bytes,4,opt,name=poster_url,json=posterUrl,proto3" json:"poster_url,omitempty"`
+	Type          string                 `protobuf:"bytes,5,opt,name=type,proto3" json:"type,omitempty"`
+	Genre         string                 `protobuf:"bytes,6,opt,name=genre,proto3" json:"genre,omitempty"`
+	ReleaseYear   int32                  `protobuf:"varint,7,opt,name=release_year,json=releaseYear,proto3" json:"release_year,omitempty"`
+	Rating        float64                `protobuf:"fixed64,8,opt,name=rating,proto3" json:"rating,omitempty"`
+	IsFeatured    bool                   `protobuf:"varint,9,opt,name=is_featured,json=isFeatured,proto3" json:"is_featured,omitempty"`
+	IsTrending    bool                   `protobuf:"varint,10,opt,name=is_trending,json=isTrending,proto3" json:"is_trending,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     string                 `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -85,6 +86,13 @@ func (x *Content) GetTitle() string {
 func (x *Content) GetDescription() string {
 	if x != nil {
 		return x.Description
+	}
+	return ""
+}
+
+func (x *Content) GetPosterUrl() string {
+	if x != nil {
+		return x.PosterUrl
 	}
 	return ""
 }
@@ -273,12 +281,13 @@ type CreateContentRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
 	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
-	Genre         string                 `protobuf:"bytes,4,opt,name=genre,proto3" json:"genre,omitempty"`
-	ReleaseYear   int32                  `protobuf:"varint,5,opt,name=release_year,json=releaseYear,proto3" json:"release_year,omitempty"`
-	Rating        float64                `protobuf:"fixed64,6,opt,name=rating,proto3" json:"rating,omitempty"`
-	IsFeatured    bool                   `protobuf:"varint,7,opt,name=is_featured,json=isFeatured,proto3" json:"is_featured,omitempty"`
-	IsTrending    bool                   `protobuf:"varint,8,opt,name=is_trending,json=isTrending,proto3" json:"is_trending,omitempty"`
+	PosterUrl     string                 `protobuf:"bytes,3,opt,name=poster_url,json=posterUrl,proto3" json:"poster_url,omitempty"`
+	Type          string                 `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
+	Genre         string                 `protobuf:"bytes,5,opt,name=genre,proto3" json:"genre,omitempty"`
+	ReleaseYear   int32                  `protobuf:"varint,6,opt,name=release_year,json=releaseYear,proto3" json:"release_year,omitempty"`
+	Rating        float64                `protobuf:"fixed64,7,opt,name=rating,proto3" json:"rating,omitempty"`
+	IsFeatured    bool                   `protobuf:"varint,8,opt,name=is_featured,json=isFeatured,proto3" json:"is_featured,omitempty"`
+	IsTrending    bool                   `protobuf:"varint,9,opt,name=is_trending,json=isTrending,proto3" json:"is_trending,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -323,6 +332,13 @@ func (x *CreateContentRequest) GetTitle() string {
 func (x *CreateContentRequest) GetDescription() string {
 	if x != nil {
 		return x.Description
+	}
+	return ""
+}
+
+func (x *CreateContentRequest) GetPosterUrl() string {
+	if x != nil {
+		return x.PosterUrl
 	}
 	return ""
 }
@@ -470,12 +486,13 @@ type UpdateContentRequest struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Type          string                 `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
-	Genre         string                 `protobuf:"bytes,5,opt,name=genre,proto3" json:"genre,omitempty"`
-	ReleaseYear   int32                  `protobuf:"varint,6,opt,name=release_year,json=releaseYear,proto3" json:"release_year,omitempty"`
-	Rating        float64                `protobuf:"fixed64,7,opt,name=rating,proto3" json:"rating,omitempty"`
-	IsFeatured    bool                   `protobuf:"varint,8,opt,name=is_featured,json=isFeatured,proto3" json:"is_featured,omitempty"`
-	IsTrending    bool                   `protobuf:"varint,9,opt,name=is_trending,json=isTrending,proto3" json:"is_trending,omitempty"`
+	PosterUrl     string                 `protobuf:"bytes,4,opt,name=poster_url,json=posterUrl,proto3" json:"poster_url,omitempty"`
+	Type          string                 `protobuf:"bytes,5,opt,name=type,proto3" json:"type,omitempty"`
+	Genre         string                 `protobuf:"bytes,6,opt,name=genre,proto3" json:"genre,omitempty"`
+	ReleaseYear   int32                  `protobuf:"varint,7,opt,name=release_year,json=releaseYear,proto3" json:"release_year,omitempty"`
+	Rating        float64                `protobuf:"fixed64,8,opt,name=rating,proto3" json:"rating,omitempty"`
+	IsFeatured    bool                   `protobuf:"varint,9,opt,name=is_featured,json=isFeatured,proto3" json:"is_featured,omitempty"`
+	IsTrending    bool                   `protobuf:"varint,10,opt,name=is_trending,json=isTrending,proto3" json:"is_trending,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -527,6 +544,13 @@ func (x *UpdateContentRequest) GetTitle() string {
 func (x *UpdateContentRequest) GetDescription() string {
 	if x != nil {
 		return x.Description
+	}
+	return ""
+}
+
+func (x *UpdateContentRequest) GetPosterUrl() string {
+	if x != nil {
+		return x.PosterUrl
 	}
 	return ""
 }
@@ -1421,24 +1445,26 @@ var File_proto_content_content_proto protoreflect.FileDescriptor
 
 const file_proto_content_content_proto_rawDesc = "" +
 	"\n" +
-	"\x1bproto/content/content.proto\x12\acontent\"\xb6\x02\n" +
+	"\x1bproto/content/content.proto\x12\acontent\"\xd5\x02\n" +
 	"\aContent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x12\n" +
-	"\x04type\x18\x04 \x01(\tR\x04type\x12\x14\n" +
-	"\x05genre\x18\x05 \x01(\tR\x05genre\x12!\n" +
-	"\frelease_year\x18\x06 \x01(\x05R\vreleaseYear\x12\x16\n" +
-	"\x06rating\x18\a \x01(\x01R\x06rating\x12\x1f\n" +
-	"\vis_featured\x18\b \x01(\bR\n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1d\n" +
+	"\n" +
+	"poster_url\x18\x04 \x01(\tR\tposterUrl\x12\x12\n" +
+	"\x04type\x18\x05 \x01(\tR\x04type\x12\x14\n" +
+	"\x05genre\x18\x06 \x01(\tR\x05genre\x12!\n" +
+	"\frelease_year\x18\a \x01(\x05R\vreleaseYear\x12\x16\n" +
+	"\x06rating\x18\b \x01(\x01R\x06rating\x12\x1f\n" +
+	"\vis_featured\x18\t \x01(\bR\n" +
 	"isFeatured\x12\x1f\n" +
-	"\vis_trending\x18\t \x01(\bR\n" +
+	"\vis_trending\x18\n" +
+	" \x01(\bR\n" +
 	"isTrending\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\n" +
-	" \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"created_at\x18\v \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\v \x01(\tR\tupdatedAt\"\xf5\x02\n" +
+	"updated_at\x18\f \x01(\tR\tupdatedAt\"\xf5\x02\n" +
 	"\aEpisode\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -1454,27 +1480,12 @@ const file_proto_content_content_proto_rawDesc = "" +
 	"created_at\x18\n" +
 	" \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\v \x01(\tR\tupdatedAt\"\xf5\x01\n" +
+	"updated_at\x18\v \x01(\tR\tupdatedAt\"\x94\x02\n" +
 	"\x14CreateContentRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\tR\x04type\x12\x14\n" +
-	"\x05genre\x18\x04 \x01(\tR\x05genre\x12!\n" +
-	"\frelease_year\x18\x05 \x01(\x05R\vreleaseYear\x12\x16\n" +
-	"\x06rating\x18\x06 \x01(\x01R\x06rating\x12\x1f\n" +
-	"\vis_featured\x18\a \x01(\bR\n" +
-	"isFeatured\x12\x1f\n" +
-	"\vis_trending\x18\b \x01(\bR\n" +
-	"isTrending\"#\n" +
-	"\x11GetContentRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\">\n" +
-	"\x12ListContentRequest\x12\x12\n" +
-	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\"\x85\x02\n" +
-	"\x14UpdateContentRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x12\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
+	"\n" +
+	"poster_url\x18\x03 \x01(\tR\tposterUrl\x12\x12\n" +
 	"\x04type\x18\x04 \x01(\tR\x04type\x12\x14\n" +
 	"\x05genre\x18\x05 \x01(\tR\x05genre\x12!\n" +
 	"\frelease_year\x18\x06 \x01(\x05R\vreleaseYear\x12\x16\n" +
@@ -1482,6 +1493,26 @@ const file_proto_content_content_proto_rawDesc = "" +
 	"\vis_featured\x18\b \x01(\bR\n" +
 	"isFeatured\x12\x1f\n" +
 	"\vis_trending\x18\t \x01(\bR\n" +
+	"isTrending\"#\n" +
+	"\x11GetContentRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\">\n" +
+	"\x12ListContentRequest\x12\x12\n" +
+	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\"\xa4\x02\n" +
+	"\x14UpdateContentRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1d\n" +
+	"\n" +
+	"poster_url\x18\x04 \x01(\tR\tposterUrl\x12\x12\n" +
+	"\x04type\x18\x05 \x01(\tR\x04type\x12\x14\n" +
+	"\x05genre\x18\x06 \x01(\tR\x05genre\x12!\n" +
+	"\frelease_year\x18\a \x01(\x05R\vreleaseYear\x12\x16\n" +
+	"\x06rating\x18\b \x01(\x01R\x06rating\x12\x1f\n" +
+	"\vis_featured\x18\t \x01(\bR\n" +
+	"isFeatured\x12\x1f\n" +
+	"\vis_trending\x18\n" +
+	" \x01(\bR\n" +
 	"isTrending\"&\n" +
 	"\x14DeleteContentRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"1\n" +

@@ -1799,7 +1799,7 @@ const file_proto_auth_auth_proto_rawDesc = "" +
 	"\vGetProfiles\x12\x18.auth.GetProfilesRequest\x1a\x19.auth.GetProfilesResponse\x12K\n" +
 	"\x0eGetProfileById\x12\x1b.auth.GetProfileByIdRequest\x1a\x1c.auth.GetProfileByIdResponse\x12H\n" +
 	"\rUpdateProfile\x12\x1a.auth.UpdateProfileRequest\x1a\x1b.auth.UpdateProfileResponse\x12H\n" +
-	"\rDeleteProfile\x12\x1a.auth.DeleteProfileRequest\x1a\x1b.auth.DeleteProfileResponseB\x1fZ\x1dstreaming-platform/proto/authb\x06proto3"
+	"\rDeleteProfile\x12\x1a.auth.DeleteProfileRequest\x1a\x1b.auth.DeleteProfileResponseB$Z\"streaming-platform/proto/auth;authb\x06proto3"
 
 var (
 	file_proto_auth_auth_proto_rawDescOnce sync.Once
