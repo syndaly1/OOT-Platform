@@ -29,6 +29,7 @@ func (h *ContentHandler) CreateContent(ctx context.Context, req *contentpb.Creat
 	content := &domain.Content{
 		Title:       req.Title,
 		Description: req.Description,
+		PosterURL:   req.PosterUrl,
 		Type:        req.Type,
 		Genre:       req.Genre,
 		ReleaseYear: int(req.ReleaseYear),
@@ -67,6 +68,7 @@ func (h *ContentHandler) UpdateContent(ctx context.Context, req *contentpb.Updat
 		ID:          req.Id,
 		Title:       req.Title,
 		Description: req.Description,
+		PosterURL:   req.PosterUrl,
 		Type:        req.Type,
 		Genre:       req.Genre,
 		ReleaseYear: int(req.ReleaseYear),
@@ -214,6 +216,7 @@ func toProtoContent(content *domain.Content) *contentpb.Content {
 		Id:          content.ID,
 		Title:       content.Title,
 		Description: content.Description,
+		PosterUrl:   content.PosterURL,
 		Type:        content.Type,
 		Genre:       content.Genre,
 		ReleaseYear: int32(content.ReleaseYear),
