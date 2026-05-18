@@ -47,10 +47,23 @@ func (h *PlaybackHandler) UpdateProgress(
 	req *pb.UpdateProgressRequest,
 ) (*pb.UpdateProgressResponse, error) {
 
+	session := &domain.PlaybackSession{
+		ProfileID:          req.ProfileId,
+		ContentID:          req.ContentId,
+		EpisodeID:          req.EpisodeId,
+		CurrentPositionSec: req.CurrentPositionSec,
+		DurationSec:        req.DurationSec,
+	}
+
+	err := h.usecase.UpdateProgress(ctx, session)
+	if err != nil {
+		return nil, err
+	}
+
 	return &pb.UpdateProgressResponse{
 		Success:        true,
-		WatchedPercent: 45.5,
-		Completed:      false,
+		WatchedPercent: session.WatchedPercent,
+		Completed:      session.Completed,
 		Message:        "progress updated",
 	}, nil
 }
@@ -60,16 +73,75 @@ func (h *PlaybackHandler) GetProgress(
 	req *pb.GetProgressRequest,
 ) (*pb.GetProgressResponse, error) {
 
+	session, err := h.usecase.GetProgress(
+		ctx,
+		req.ProfileId,
+		req.ContentId,
+		req.EpisodeId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &pb.GetProgressResponse{
 		Progress: &pb.PlaybackProgress{
-			ProfileId:          req.ProfileId,
-			ContentId:          req.ContentId,
-			EpisodeId:          req.EpisodeId,
-			CurrentPositionSec: 320,
-			DurationSec:        1200,
-			WatchedPercent:     26.6,
-			Completed:          false,
-			UpdatedAt:          "2026-05-17",
+			ProfileId:          session.ProfileID,
+			ContentId:          session.ContentID,
+			EpisodeId:          session.EpisodeID,
+			CurrentPositionSec: session.CurrentPositionSec,
+			DurationSec:        session.DurationSec,
+			WatchedPercent:     session.WatchedPercent,
+			Completed:          session.Completed,
 		},
+	}, nil
+}
+
+func (h *PlaybackHandler) GetContinueWatching(
+	ctx context.Context,
+	req *pb.GetContinueWatchingRequest,
+) (*pb.GetContinueWatchingResponse, error) {
+
+	sessions, err := h.usecase.GetContinueWatching(ctx, req.ProfileId)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]*pb.PlaybackProgress, 0, len(sessions))
+
+	for _, session := range sessions {
+		items = append(items, &pb.PlaybackProgress{
+			ProfileId:          session.ProfileID,
+			ContentId:          session.ContentID,
+			EpisodeId:          session.EpisodeID,
+			CurrentPositionSec: session.CurrentPositionSec,
+			DurationSec:        session.DurationSec,
+			WatchedPercent:     session.WatchedPercent,
+			Completed:          session.Completed,
+		})
+	}
+
+	return &pb.GetContinueWatchingResponse{
+		Items: items,
+	}, nil
+}
+
+func (h *PlaybackHandler) MarkCompleted(
+	ctx context.Context,
+	req *pb.MarkCompletedRequest,
+) (*pb.MarkCompletedResponse, error) {
+
+	err := h.usecase.MarkCompleted(
+		ctx,
+		req.ProfileId,
+		req.ContentId,
+		req.EpisodeId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.MarkCompletedResponse{
+		Success: true,
+		Message: "content marked as completed",
 	}, nil
 }

@@ -49,9 +49,11 @@ func (r *PlaybackRepository) UpdateProgress(ctx context.Context, session *domain
 		SET current_position_sec=$1,
 			duration_sec=$2,
 			watched_percent=$3,
-			completed=$4
-		WHERE profile_id=$5 AND content_id=$6
+			completed=$4,
+			updated_at=NOW()
+		WHERE profile_id=$5 AND content_id=$6 AND episode_id=$7
 	`
+
 	_, err := r.db.Exec(ctx, query,
 		session.CurrentPositionSec,
 		session.DurationSec,
@@ -59,23 +61,32 @@ func (r *PlaybackRepository) UpdateProgress(ctx context.Context, session *domain
 		session.Completed,
 		session.ProfileID,
 		session.ContentID,
+		session.EpisodeID,
 	)
 
 	return err
 }
 
-func (r *PlaybackRepository) GetProgress(ctx context.Context, profileID, contentID string) (*domain.PlaybackSession, error) {
+func (r *PlaybackRepository) GetProgress(
+	ctx context.Context,
+	profileID string,
+	contentID string,
+	episodeID string,
+) (*domain.PlaybackSession, error) {
 	query := `
-		SELECT profile_id, content_id, current_position_sec, duration_sec, watched_percent, completed
+		SELECT profile_id, content_id, episode_id,
+		       current_position_sec, duration_sec,
+		       watched_percent, completed
 		FROM watch_progress
-		WHERE profile_id=$1 AND content_id=$2
+		WHERE profile_id=$1 AND content_id=$2 AND episode_id=$3
 	`
 
 	var session domain.PlaybackSession
 
-	err := r.db.QueryRow(ctx, query, profileID, contentID).Scan(
+	err := r.db.QueryRow(ctx, query, profileID, contentID, episodeID).Scan(
 		&session.ProfileID,
 		&session.ContentID,
+		&session.EpisodeID,
 		&session.CurrentPositionSec,
 		&session.DurationSec,
 		&session.WatchedPercent,
@@ -89,22 +100,26 @@ func (r *PlaybackRepository) GetProgress(ctx context.Context, profileID, content
 	return &session, nil
 }
 
-func (r *PlaybackRepository) MarkCompleted(ctx context.Context, profileID, contentID string) error {
+func (r *PlaybackRepository) MarkCompleted(ctx context.Context, profileID, contentID, episodeID string) error {
 	query := `
 		UPDATE watch_progress
-		SET completed=true
-		WHERE profile_id=$1 AND content_id=$2
+		SET completed=true,
+			updated_at=NOW()
+		WHERE profile_id=$1 AND content_id=$2 AND episode_id=$3
 	`
 
-	_, err := r.db.Exec(ctx, query, profileID, contentID)
+	_, err := r.db.Exec(ctx, query, profileID, contentID, episodeID)
 	return err
 }
 
 func (r *PlaybackRepository) GetContinueWatching(ctx context.Context, profileID string) ([]*domain.PlaybackSession, error) {
 	query := `
-		SELECT profile_id, content_id, current_position_sec, duration_sec, watched_percent, completed
+		SELECT profile_id, content_id, episode_id,
+		       current_position_sec, duration_sec,
+		       watched_percent, completed
 		FROM watch_progress
-		WHERE profile_id=$1 AND completed=false
+		WHERE profile_id=$1 AND completed=false AND current_position_sec > 0
+		ORDER BY updated_at DESC
 	`
 
 	rows, err := r.db.Query(ctx, query, profileID)
@@ -121,6 +136,7 @@ func (r *PlaybackRepository) GetContinueWatching(ctx context.Context, profileID 
 		err := rows.Scan(
 			&session.ProfileID,
 			&session.ContentID,
+			&session.EpisodeID,
 			&session.CurrentPositionSec,
 			&session.DurationSec,
 			&session.WatchedPercent,
