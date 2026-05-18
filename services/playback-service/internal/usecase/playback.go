@@ -7,11 +7,17 @@ import (
 )
 
 type PlaybackUsecase struct {
-	repo domain.PlaybackRepository
+	repo      domain.PlaybackRepository
+	publisher domain.PlaybackEventPublisher
 }
 
-func NewPlaybackUsecase(repo domain.PlaybackRepository) *PlaybackUsecase {
-	return &PlaybackUsecase{repo: repo}
+func NewPlaybackUsecase(repo domain.PlaybackRepository, publishers ...domain.PlaybackEventPublisher) *PlaybackUsecase {
+	var publisher domain.PlaybackEventPublisher
+	if len(publishers) > 0 {
+		publisher = publishers[0]
+	}
+
+	return &PlaybackUsecase{repo: repo, publisher: publisher}
 }
 
 func (u *PlaybackUsecase) StartPlayback(ctx context.Context, session *domain.PlaybackSession) error {
@@ -38,7 +44,17 @@ func (u *PlaybackUsecase) UpdateProgress(ctx context.Context, session *domain.Pl
 		session.Status = "PLAYING"
 	}
 
-	return u.repo.UpdateProgress(ctx, session)
+	if err := u.repo.UpdateProgress(ctx, session); err != nil {
+		return err
+	}
+
+	if u.publisher != nil {
+		if err := u.publisher.PublishProgressUpdated(ctx, session); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (u *PlaybackUsecase) GetProgress(ctx context.Context, profileID, contentID, episodeID string) (*domain.PlaybackSession, error) {
@@ -54,7 +70,17 @@ func (u *PlaybackUsecase) GetContinueWatching(ctx context.Context, profileID str
 }
 
 func (u *PlaybackUsecase) MarkCompleted(ctx context.Context, profileID, contentID, episodeID string) error {
-	return u.repo.MarkCompleted(ctx, profileID, contentID, episodeID)
+	if err := u.repo.MarkCompleted(ctx, profileID, contentID, episodeID); err != nil {
+		return err
+	}
+
+	if u.publisher != nil {
+		if err := u.publisher.PublishCompleted(ctx, profileID, contentID, episodeID); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (u *PlaybackUsecase) RemoveFromContinueWatching(ctx context.Context, profileID, contentID, episodeID string) error {
