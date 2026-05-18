@@ -1,0 +1,237 @@
+syntax = "proto3";
+
+package playback;
+
+option go_package = "streaming-platform/proto/playback";
+
+// ───────────────────────────────
+// PLAYBACK SERVICE
+// ───────────────────────────────
+
+service PlaybackService {
+  rpc StartPlayback(StartPlaybackRequest) returns (StartPlaybackResponse);
+  rpc UpdateProgress(UpdateProgressRequest) returns (UpdateProgressResponse);
+  rpc GetProgress(GetProgressRequest) returns (GetProgressResponse);
+  rpc GetResumeData(GetResumeDataRequest) returns (GetResumeDataResponse);
+  rpc GetContinueWatching(GetContinueWatchingRequest) returns (GetContinueWatchingResponse);
+  rpc RemoveFromContinueWatching(RemoveFromContinueWatchingRequest) returns (RemoveFromContinueWatchingResponse);
+  rpc MarkCompleted(MarkCompletedRequest) returns (MarkCompletedResponse);
+  rpc EndPlaybackSession(EndPlaybackSessionRequest) returns (EndPlaybackSessionResponse);
+  rpc GetPlaybackSession(GetPlaybackSessionRequest) returns (GetPlaybackSessionResponse);
+  rpc GetWatchHistory(GetWatchHistoryRequest) returns (GetWatchHistoryResponse);
+  rpc ClearWatchHistory(ClearWatchHistoryRequest) returns (ClearWatchHistoryResponse);
+  rpc GetProfileStats(GetProfileStatsRequest) returns (GetProfileStatsResponse);
+  rpc SkipIntro(SkipIntroRequest) returns (SkipIntroResponse);
+  rpc GetLastWatchedContent(GetLastWatchedContentRequest) returns (GetLastWatchedContentResponse);
+  rpc DeleteProgress(DeleteProgressRequest) returns (DeleteProgressResponse);
+}
+
+// ───────────────────────────────
+// ENUMS
+// ───────────────────────────────
+
+enum PlaybackStatus {
+  PLAYING = 0;
+  PAUSED = 1;
+  COMPLETED = 2;
+  STOPPED = 3;
+}
+
+// ───────────────────────────────
+// MESSAGES
+// ───────────────────────────────
+
+message StartPlaybackRequest {
+  string profile_id = 1;
+  string content_id = 2;
+  string episode_id = 3;
+  int32 duration_sec = 4;
+  string device = 5;
+}
+
+message StartPlaybackResponse {
+  string session_id = 1;
+  string message = 2;
+}
+
+message UpdateProgressRequest {
+  string session_id = 1;
+  string profile_id = 2;
+  string content_id = 3;
+  string episode_id = 4;
+  int32 current_position_sec = 5;
+  int32 duration_sec = 6;
+}
+
+message UpdateProgressResponse {
+  bool success = 1;
+  float watched_percent = 2;
+  bool completed = 3;
+  string message = 4;
+}
+
+message GetProgressRequest {
+  string profile_id = 1;
+  string content_id = 2;
+  string episode_id = 3;
+}
+
+message GetProgressResponse {
+  PlaybackProgress progress = 1;
+}
+
+message GetResumeDataRequest {
+  string profile_id = 1;
+  string content_id = 2;
+  string episode_id = 3;
+}
+
+message GetResumeDataResponse {
+  string profile_id = 1;
+  string content_id = 2;
+  string episode_id = 3;
+  int32 last_position_sec = 4;
+  bool completed = 5;
+  bool should_show_continue = 6;
+  int32 intro_start_sec = 7;
+  int32 intro_end_sec = 8;
+}
+
+message GetContinueWatchingRequest {
+  string profile_id = 1;
+}
+
+message GetContinueWatchingResponse {
+  repeated PlaybackProgress items = 1;
+}
+
+message RemoveFromContinueWatchingRequest {
+  string profile_id = 1;
+  string content_id = 2;
+  string episode_id = 3;
+}
+
+message RemoveFromContinueWatchingResponse {
+  bool success = 1;
+}
+
+message MarkCompletedRequest {
+  string profile_id = 1;
+  string content_id = 2;
+  string episode_id = 3;
+}
+
+message MarkCompletedResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message EndPlaybackSessionRequest {
+  string session_id = 1;
+}
+
+message EndPlaybackSessionResponse {
+  bool success = 1;
+}
+
+message GetPlaybackSessionRequest {
+  string session_id = 1;
+}
+
+message GetPlaybackSessionResponse {
+  PlaybackSession session = 1;
+}
+
+message GetWatchHistoryRequest {
+  string profile_id = 1;
+}
+
+message GetWatchHistoryResponse {
+  repeated WatchHistoryItem history = 1;
+}
+
+message ClearWatchHistoryRequest {
+  string profile_id = 1;
+}
+
+message ClearWatchHistoryResponse {
+  bool success = 1;
+}
+
+message GetProfileStatsRequest {
+  string profile_id = 1;
+}
+
+message GetProfileStatsResponse {
+  string profile_id = 1;
+  int32 total_watched_sec = 2;
+  int32 completed_count = 3;
+  int32 in_progress_count = 4;
+}
+
+message SkipIntroRequest {
+  string session_id = 1;
+  string profile_id = 2;
+  string content_id = 3;
+  string episode_id = 4;
+  int32 intro_end_sec = 5;
+}
+
+message SkipIntroResponse {
+  bool success = 1;
+  int32 new_position_sec = 2;
+  string message = 3;
+}
+
+message GetLastWatchedContentRequest {
+  string profile_id = 1;
+}
+
+message GetLastWatchedContentResponse {
+  PlaybackProgress progress = 1;
+}
+
+message DeleteProgressRequest {
+  string profile_id = 1;
+  string content_id = 2;
+  string episode_id = 3;
+}
+
+message DeleteProgressResponse {
+  bool success = 1;
+}
+
+// ───────────────────────────────
+// SHARED MODELS
+// ───────────────────────────────
+
+message PlaybackProgress {
+  string profile_id = 1;
+  string content_id = 2;
+  string episode_id = 3;
+  int32 current_position_sec = 4;
+  int32 duration_sec = 5;
+  float watched_percent = 6;
+  bool completed = 7;
+  string updated_at = 8;
+}
+
+message PlaybackSession {
+  string session_id = 1;
+  string profile_id = 2;
+  string content_id = 3;
+  string episode_id = 4;
+  string device = 5;
+  PlaybackStatus status = 6;
+  string started_at = 7;
+  string ended_at = 8;
+}
+
+message WatchHistoryItem {
+  string profile_id = 1;
+  string content_id = 2;
+  string episode_id = 3;
+  int32 total_watched_sec = 4;
+  bool completed = 5;
+  string watched_at = 6;
+}
