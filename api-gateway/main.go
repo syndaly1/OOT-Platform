@@ -6,10 +6,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	authpb "streaming-platform/proto/auth"
+	contentpb "streaming-platform/proto/content"
 	playbackpb "streaming-platform/proto/playback"
 
 	"google.golang.org/grpc"
@@ -20,12 +22,14 @@ import (
 
 type gateway struct {
 	auth     authpb.AuthServiceClient
+	content  contentpb.ContentServiceClient
 	playback playbackpb.PlaybackServiceClient
 	marshal  protojson.MarshalOptions
 }
 
 func main() {
 	authAddr := getenv("AUTH_SERVICE_URL", "localhost:50051")
+	contentAddr := getenv("CONTENT_SERVICE_URL", "localhost:50052")
 	playbackAddr := getenv("PLAYBACK_SERVICE_URL", "localhost:50053")
 
 	authConn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -33,6 +37,12 @@ func main() {
 		log.Fatal("auth grpc connect:", err)
 	}
 	defer authConn.Close()
+
+	contentConn, err := grpc.NewClient(contentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal("content grpc connect:", err)
+	}
+	defer contentConn.Close()
 
 	playbackConn, err := grpc.NewClient(playbackAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -42,6 +52,7 @@ func main() {
 
 	g := &gateway{
 		auth:     authpb.NewAuthServiceClient(authConn),
+		content:  contentpb.NewContentServiceClient(contentConn),
 		playback: playbackpb.NewPlaybackServiceClient(playbackConn),
 		marshal: protojson.MarshalOptions{
 			UseProtoNames: false,
@@ -50,6 +61,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	// Auth routes
 	mux.HandleFunc("POST /api/auth/register", g.register)
 	mux.HandleFunc("POST /api/auth/login", g.login)
 	mux.HandleFunc("POST /api/auth/refresh", g.refreshToken)
@@ -58,22 +70,45 @@ func main() {
 	mux.HandleFunc("POST /api/auth/forgot-password", g.forgotPassword)
 	mux.HandleFunc("POST /api/auth/reset-password", g.resetPassword)
 
+	// Account routes
 	mux.HandleFunc("GET /api/auth/account/{accountId}", g.getAccount)
 	mux.HandleFunc("PUT /api/auth/account/{accountId}", g.updateAccount)
 	mux.HandleFunc("DELETE /api/auth/account/{accountId}", g.deleteAccount)
 
+	// Profile routes
 	mux.HandleFunc("POST /api/profiles", g.createProfile)
 	mux.HandleFunc("GET /api/profiles", g.getProfiles)
 	mux.HandleFunc("GET /api/profiles/{profileId}", g.getProfileByID)
 	mux.HandleFunc("PUT /api/profiles/{profileId}", g.updateProfile)
 	mux.HandleFunc("DELETE /api/profiles/{profileId}", g.deleteProfile)
 
+	// Content routes
+	mux.HandleFunc("POST /api/content", g.createContent)
+	mux.HandleFunc("GET /api/content", g.listContent)
+	mux.HandleFunc("GET /api/content/search", g.searchContent)
+	mux.HandleFunc("GET /api/content/genre/{genre}", g.getContentByGenre)
+	mux.HandleFunc("GET /api/content/trending", g.getTrendingContent)
+	mux.HandleFunc("GET /api/content/featured", g.getFeaturedContent)
+	mux.HandleFunc("GET /api/content/{contentId}", g.getContent)
+	mux.HandleFunc("PUT /api/content/{contentId}", g.updateContent)
+	mux.HandleFunc("DELETE /api/content/{contentId}", g.deleteContent)
+
+	// Episode routes
+	mux.HandleFunc("POST /api/content/{contentId}/episodes", g.createEpisode)
+	mux.HandleFunc("GET /api/content/{contentId}/episodes", g.listEpisodesByContent)
+	mux.HandleFunc("GET /api/episodes/{episodeId}", g.getEpisode)
+	mux.HandleFunc("PUT /api/episodes/{episodeId}", g.updateEpisode)
+	mux.HandleFunc("DELETE /api/episodes/{episodeId}", g.deleteEpisode)
+	mux.HandleFunc("PUT /api/episodes/{episodeId}/skip-intro", g.setSkipIntroMetadata)
+
+	// Playback routes
 	mux.HandleFunc("POST /api/playback/start", g.startPlayback)
 	mux.HandleFunc("PUT /api/playback/progress", g.updateProgress)
 	mux.HandleFunc("GET /api/playback/continue-watching/{profileId}", g.getContinueWatching)
 	mux.HandleFunc("GET /api/playback/history/{profileId}", g.getWatchHistory)
 	mux.HandleFunc("DELETE /api/playback/continue-watching/{profileId}/{contentId}", g.removeFromContinueWatching)
 
+	// Old playback routes, kept for compatibility
 	mux.HandleFunc("POST /playback/start", g.startPlayback)
 	mux.HandleFunc("PUT /playback/progress", g.updateProgress)
 	mux.HandleFunc("GET /playback/continue-watching/{profileId}", g.getContinueWatching)
@@ -87,6 +122,8 @@ func main() {
 		log.Fatal("http serve:", err)
 	}
 }
+
+// AUTH REQUESTS
 
 type registerRequest struct {
 	Email    string `json:"email"`
@@ -142,6 +179,57 @@ type updateProfileRequest struct {
 	Avatar   string `json:"avatar"`
 }
 
+// CONTENT REQUESTS
+
+type createContentRequest struct {
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	PosterURL   string  `json:"poster_url"`
+	PosterUrl   string  `json:"posterUrl"`
+	Type        string  `json:"type"`
+	Genre       string  `json:"genre"`
+	ReleaseYear int32   `json:"release_year"`
+	Rating      float64 `json:"rating"`
+	IsFeatured  bool    `json:"is_featured"`
+	IsTrending  bool    `json:"is_trending"`
+}
+
+type updateContentRequest struct {
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	PosterURL   string  `json:"poster_url"`
+	PosterUrl   string  `json:"posterUrl"`
+	Type        string  `json:"type"`
+	Genre       string  `json:"genre"`
+	ReleaseYear int32   `json:"release_year"`
+	Rating      float64 `json:"rating"`
+	IsFeatured  bool    `json:"is_featured"`
+	IsTrending  bool    `json:"is_trending"`
+}
+
+type createEpisodeRequest struct {
+	Title           string `json:"title"`
+	Description     string `json:"description"`
+	SeasonNumber    int32  `json:"season_number"`
+	EpisodeNumber   int32  `json:"episode_number"`
+	DurationSeconds int32  `json:"duration_seconds"`
+}
+
+type updateEpisodeRequest struct {
+	Title           string `json:"title"`
+	Description     string `json:"description"`
+	SeasonNumber    int32  `json:"season_number"`
+	EpisodeNumber   int32  `json:"episode_number"`
+	DurationSeconds int32  `json:"duration_seconds"`
+}
+
+type setSkipIntroRequest struct {
+	SkipIntroStart int32 `json:"skip_intro_start"`
+	SkipIntroEnd   int32 `json:"skip_intro_end"`
+}
+
+// PLAYBACK REQUESTS
+
 type startPlaybackRequest struct {
 	ProfileID   string `json:"profile_id"`
 	ProfileId   string `json:"profileId"`
@@ -186,6 +274,8 @@ func (r updateProgressRequest) toProto() *playbackpb.UpdateProgressRequest {
 		DurationSec:        r.DurationSec,
 	}
 }
+
+// AUTH HANDLERS
 
 func (g *gateway) register(w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
@@ -480,6 +570,298 @@ func (g *gateway) deleteProfile(w http.ResponseWriter, r *http.Request) {
 	g.writeProto(w, resp)
 }
 
+// CONTENT HANDLERS
+
+func (g *gateway) createContent(w http.ResponseWriter, r *http.Request) {
+	var req createContentRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.CreateContent(ctx, &contentpb.CreateContentRequest{
+		Title:       req.Title,
+		Description: req.Description,
+		PosterUrl:   first(req.PosterURL, req.PosterUrl),
+		Type:        req.Type,
+		Genre:       req.Genre,
+		ReleaseYear: req.ReleaseYear,
+		Rating:      req.Rating,
+		IsFeatured:  req.IsFeatured,
+		IsTrending:  req.IsTrending,
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) getContent(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.GetContent(ctx, &contentpb.GetContentRequest{
+		Id: r.PathValue("contentId"),
+	})
+	if err != nil {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) listContent(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.ListContent(ctx, &contentpb.ListContentRequest{
+		Page:  int32(queryInt(r, "page", 1)),
+		Limit: int32(queryInt(r, "limit", 20)),
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) updateContent(w http.ResponseWriter, r *http.Request) {
+	var req updateContentRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.UpdateContent(ctx, &contentpb.UpdateContentRequest{
+		Id:          r.PathValue("contentId"),
+		Title:       req.Title,
+		Description: req.Description,
+		PosterUrl:   first(req.PosterURL, req.PosterUrl),
+		Type:        req.Type,
+		Genre:       req.Genre,
+		ReleaseYear: req.ReleaseYear,
+		Rating:      req.Rating,
+		IsFeatured:  req.IsFeatured,
+		IsTrending:  req.IsTrending,
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) deleteContent(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.DeleteContent(ctx, &contentpb.DeleteContentRequest{
+		Id: r.PathValue("contentId"),
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) searchContent(w http.ResponseWriter, r *http.Request) {
+	query := first(r.URL.Query().Get("q"), r.URL.Query().Get("query"))
+	if query == "" {
+		writeErrorMessage(w, http.StatusBadRequest, "q is required")
+		return
+	}
+
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.SearchContent(ctx, &contentpb.SearchContentRequest{
+		Query: query,
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) getContentByGenre(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.GetContentByGenre(ctx, &contentpb.GetContentByGenreRequest{
+		Genre: r.PathValue("genre"),
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) getTrendingContent(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.GetTrendingContent(ctx, &contentpb.GetTrendingContentRequest{
+		Limit: int32(queryInt(r, "limit", 10)),
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) getFeaturedContent(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.GetFeaturedContent(ctx, &contentpb.GetFeaturedContentRequest{
+		Limit: int32(queryInt(r, "limit", 10)),
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+// EPISODE HANDLERS
+
+func (g *gateway) createEpisode(w http.ResponseWriter, r *http.Request) {
+	var req createEpisodeRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.CreateEpisode(ctx, &contentpb.CreateEpisodeRequest{
+		ContentId:       r.PathValue("contentId"),
+		Title:           req.Title,
+		Description:     req.Description,
+		SeasonNumber:    req.SeasonNumber,
+		EpisodeNumber:   req.EpisodeNumber,
+		DurationSeconds: req.DurationSeconds,
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) getEpisode(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.GetEpisode(ctx, &contentpb.GetEpisodeRequest{
+		Id: r.PathValue("episodeId"),
+	})
+	if err != nil {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) listEpisodesByContent(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.ListEpisodesByContent(ctx, &contentpb.ListEpisodesByContentRequest{
+		ContentId: r.PathValue("contentId"),
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) updateEpisode(w http.ResponseWriter, r *http.Request) {
+	var req updateEpisodeRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.UpdateEpisode(ctx, &contentpb.UpdateEpisodeRequest{
+		Id:              r.PathValue("episodeId"),
+		Title:           req.Title,
+		Description:     req.Description,
+		SeasonNumber:    req.SeasonNumber,
+		EpisodeNumber:   req.EpisodeNumber,
+		DurationSeconds: req.DurationSeconds,
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) deleteEpisode(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.DeleteEpisode(ctx, &contentpb.DeleteEpisodeRequest{
+		Id: r.PathValue("episodeId"),
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+func (g *gateway) setSkipIntroMetadata(w http.ResponseWriter, r *http.Request) {
+	var req setSkipIntroRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	ctx, cancel := requestContext(r)
+	defer cancel()
+
+	resp, err := g.content.SetSkipIntroMetadata(ctx, &contentpb.SetSkipIntroMetadataRequest{
+		EpisodeId:      r.PathValue("episodeId"),
+		SkipIntroStart: req.SkipIntroStart,
+		SkipIntroEnd:   req.SkipIntroEnd,
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, err)
+		return
+	}
+
+	g.writeProto(w, resp)
+}
+
+// PLAYBACK HANDLERS
+
 func (g *gateway) startPlayback(w http.ResponseWriter, r *http.Request) {
 	var req startPlaybackRequest
 	if !decodeJSON(w, r, &req) {
@@ -563,6 +945,8 @@ func (g *gateway) removeFromContinueWatching(w http.ResponseWriter, r *http.Requ
 	g.writeProto(w, resp)
 }
 
+// HELPERS
+
 func (g *gateway) writeProto(w http.ResponseWriter, msg proto.Message) {
 	data, err := g.marshal.Marshal(msg)
 	if err != nil {
@@ -617,6 +1001,20 @@ func first(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func queryInt(r *http.Request, key string, fallback int) int {
+	raw := strings.TrimSpace(r.URL.Query().Get(key))
+	if raw == "" {
+		return fallback
+	}
+
+	value, err := strconv.Atoi(raw)
+	if err != nil {
+		return fallback
+	}
+
+	return value
 }
 
 func profileTypeFromString(value string) authpb.ProfileType {
