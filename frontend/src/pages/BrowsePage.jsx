@@ -109,79 +109,45 @@ export default function BrowsePage() {
   }, [collection]);
 
   const filteredItems = useMemo(() => {
-    let result = [...baseItems];
+  let result = [...baseItems];
 
-    if (filters.type !== "all") {
-      result = result.filter((item) => item.type === filters.type);
+  if (filters.type !== "all") {
+    result = result.filter((item) => item.type === filters.type);
+  }
+
+  if (filters.subtitle !== "all") {
+    result = result.filter((item) => item.subtitle === filters.subtitle);
+  }
+
+  if (filters.region !== "all") {
+    result = result.filter((item) => item.region === filters.region);
+  }
+
+  if (filters.status !== "all") {
+    result = result.filter((item) => item.status === filters.status);
+  }
+
+  if (filters.sort === "popular") {
+    result.sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  if (filters.sort === "last-update") {
+    result.sort((a, b) => b.id.localeCompare(a.id));
+  }
+
+  const seenTitles = new Set();
+
+  result = result.filter((item) => {
+    const normalizedTitle = item.title.toLowerCase().trim();
+
+    if (seenTitles.has(normalizedTitle)) {
+      return false;
     }
 
-    if (filters.subtitle !== "all") {
-      result = result.filter((item) => item.subtitle === filters.subtitle);
-    }
+    seenTitles.add(normalizedTitle);
+    return true;
+  });
 
-    if (filters.region !== "all") {
-      result = result.filter((item) => item.region === filters.region);
-    }
-
-    if (filters.status !== "all") {
-      result = result.filter((item) => item.status === filters.status);
-    }
-
-    if (filters.sort === "popular") {
-      result.sort((a, b) => a.title.localeCompare(b.title));
-    }
-
-    if (filters.sort === "last-update") {
-      result.sort((a, b) => b.id.localeCompare(a.id));
-    }
-
-    return result;
-  }, [baseItems, filters]);
-
-  return (
-    <main className="page page--browse">
-      <div className="browse-header">
-        <h1>{collectionLabels[collection] || "Browse Library"}</h1>
-        <p>{filteredItems.length} items found</p>
-      </div>
-
-      <div className="browse-filters">
-        <FilterChips
-          options={filterGroups.type}
-          selectedValue={filters.type}
-          onSelect={(value) => updateParam("type", value)}
-        />
-
-        <FilterChips
-          options={filterGroups.subtitle}
-          selectedValue={filters.subtitle}
-          onSelect={(value) => updateParam("subtitle", value)}
-        />
-
-        <FilterChips
-          options={filterGroups.region}
-          selectedValue={filters.region}
-          onSelect={(value) => updateParam("region", value)}
-        />
-
-        <FilterChips
-          options={filterGroups.status}
-          selectedValue={filters.status}
-          onSelect={(value) => updateParam("status", value)}
-        />
-
-        <FilterChips
-          options={filterGroups.sort}
-          selectedValue={filters.sort}
-          onSelect={(value) => updateParam("sort", value)}
-        />
-      </div>
-
-      <div className="browse-grid">
-        {filteredItems.map((item) => (
-          <DramaCard key={item.id} item={item} to={`/title/${item.id}`} />
-        ))}
-      </div>
-    </main>
-  );
+  return result;
+}, [baseItems, filters]);
 }

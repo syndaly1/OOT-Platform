@@ -6,6 +6,26 @@ function formatDuration(seconds) {
   return `${minutes} min`;
 }
 
+function formatRegion(region) {
+  const regions = {
+    "south-korea": "South Korea",
+    china: "China",
+    japan: "Japan",
+  };
+
+  return regions[region] || region;
+}
+
+function formatStatus(status) {
+  const statuses = {
+    ongoing: "Ongoing",
+    completed: "Completed",
+    upcoming: "Upcoming",
+  };
+
+  return statuses[status] || status;
+}
+
 export default function DetailsPage() {
   const { id } = useParams();
   const item = getItemById(id);
@@ -21,15 +41,28 @@ export default function DetailsPage() {
     );
   }
 
+  const heroStyle = item.imageUrl
+    ? {
+        backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.92), rgba(0,0,0,0.62), rgba(0,0,0,0.25)), url(${item.imageUrl})`,
+      }
+    : {
+        background: getPlaceholderBackground(item.imageLabel),
+      };
+
+  const posterStyle = item.imageUrl
+    ? {
+        backgroundImage: `url(${item.imageUrl})`,
+      }
+    : {
+        background: "rgba(0, 0, 0, 0.28)",
+      };
+
   return (
     <main className="details-page">
-      <section
-        className="details-hero"
-        style={{ background: getPlaceholderBackground(item.imageLabel) }}
-      >
+      <section className="details-hero" style={heroStyle}>
         <div className="details-hero__overlay">
-          <div className="details-poster">
-            <span>{item.imageLabel}</span>
+          <div className="details-poster" style={posterStyle}>
+            {!item.imageUrl && <span>{item.imageLabel}</span>}
           </div>
 
           <div className="details-info">
@@ -41,8 +74,8 @@ export default function DetailsPage() {
               <span>{item.year}</span>
               <span>{formatDuration(item.durationSec)}</span>
               <span>{item.ageRating}</span>
-              <span>{item.status}</span>
-              <span>{item.region}</span>
+              <span>{formatStatus(item.status)}</span>
+              <span>{formatRegion(item.region)}</span>
             </div>
 
             <p>{item.description}</p>

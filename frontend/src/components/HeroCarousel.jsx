@@ -34,9 +34,17 @@ export default function HeroCarousel({ slides = [] }) {
       </button>
 
       <div
-        className="hero__slide"
-        style={{ background: getPlaceholderBackground(current.imageLabel) }}
-      >
+  className="hero__slide"
+  style={
+    current.imageUrl
+      ? {
+          backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.78), rgba(0,0,0,0.18)), url(${current.imageUrl})`,
+        }
+      : {
+          background: getPlaceholderBackground(current.imageLabel),
+        }
+  }
+>
         <div className="hero__overlay">
           <span className="hero__tag">Featured</span>
           <h1 className="hero__title">{current.title}</h1>
