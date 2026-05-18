@@ -11,4 +11,16 @@ type PlaybackRepository interface {
 	GetContinueWatching(ctx context.Context, profileID string) ([]*PlaybackSession, error)
 
 	MarkCompleted(ctx context.Context, profileID, contentID, episodeID string) error
+	RemoveFromContinueWatching(ctx context.Context, profileID, contentID, episodeID string) error
+
+	GetWatchHistory(ctx context.Context, profileID string) ([]*PlaybackSession, error)
+	ClearWatchHistory(ctx context.Context, profileID string) error
+
+	GetProfileStats(ctx context.Context, profileID string) (int32, int32, int32, error)
+
+	GetPlaybackSession(ctx context.Context, sessionID string) (*PlaybackSession, error)
+	EndPlaybackSession(ctx context.Context, sessionID string) error
+
+	DeleteProgress(ctx context.Context, profileID, contentID, episodeID string) error
+	GetLastWatchedContent(ctx context.Context, profileID string) (*PlaybackSession, error)
 }
