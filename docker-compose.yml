@@ -1,5 +1,3 @@
-
-
 services:
   auth-postgres:
     image: postgres:16-alpine
@@ -83,6 +81,12 @@ services:
     environment:
       AUTH_DB_HOST: auth-postgres
       AUTH_DB_PORT: 5432
+      AUTH_DB_USER: postgres
+      AUTH_DB_PASSWORD: postgres
+      AUTH_DB_NAME: auth_db
+      AUTH_DB_URL: postgres://postgres:postgres@auth-postgres:5432/auth_db?sslmode=disable
+      AUTH_DATABASE_URL: postgres://postgres:postgres@auth-postgres:5432/auth_db?sslmode=disable
+      DATABASE_URL: postgres://postgres:postgres@auth-postgres:5432/auth_db?sslmode=disable
       REDIS_HOST: redis
       NATS_URL: nats://nats:4222
     ports:
@@ -123,6 +127,10 @@ services:
     environment:
       PLAYBACK_DB_HOST: playback-postgres
       PLAYBACK_DB_PORT: 5432
+      PLAYBACK_DB_USER: postgres
+      PLAYBACK_DB_PASSWORD: postgres
+      PLAYBACK_DB_NAME: playback_db
+      PLAYBACK_DB_URL: postgres://postgres:postgres@playback-postgres:5432/playback_db?sslmode=disable
       REDIS_HOST: redis
       NATS_URL: nats://nats:4222
     ports:

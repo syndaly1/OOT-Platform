@@ -38,11 +38,21 @@ type passwordResetEvent struct {
 func main() {
 	cfg := config.Load()
 
-	dsn := fmt.Sprintf(
+	dbDSN := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		cfg.DB.Host, cfg.DB.Port, cfg.DB.User, cfg.DB.Password, cfg.DB.Name,
 	)
-	db, err := sql.Open("postgres", dsn)
+
+	migrateDSN := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		cfg.DB.User,
+		cfg.DB.Password,
+		cfg.DB.Host,
+		cfg.DB.Port,
+		cfg.DB.Name,
+	)
+
+	db, err := sql.Open("postgres", dbDSN)
 	if err != nil {
 		log.Fatal("db open:", err)
 	}
@@ -53,7 +63,7 @@ func main() {
 	}
 	log.Println("connected to PostgreSQL")
 
-	m, err := migrate.New("file://migrations", dsn)
+	m, err := migrate.New("file://migrations", migrateDSN)
 	if err != nil {
 		log.Fatal("migrate init:", err)
 	}
