@@ -17,8 +17,8 @@ func NewContentPostgresRepository(db *sql.DB) *ContentPostgresRepository {
 
 func (r *ContentPostgresRepository) CreateContent(ctx context.Context, content *domain.Content) error {
 	query := `
-		INSERT INTO contents (title, description, type, genre, release_year, rating, is_featured, is_trending)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO contents (title, description, poster_url, type, genre, release_year, rating, is_featured, is_trending)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id, created_at, updated_at
 	`
 
@@ -27,6 +27,7 @@ func (r *ContentPostgresRepository) CreateContent(ctx context.Context, content *
 		query,
 		content.Title,
 		content.Description,
+		content.PosterURL,
 		content.Type,
 		content.Genre,
 		content.ReleaseYear,
@@ -38,7 +39,7 @@ func (r *ContentPostgresRepository) CreateContent(ctx context.Context, content *
 
 func (r *ContentPostgresRepository) GetContentByID(ctx context.Context, id string) (*domain.Content, error) {
 	query := `
-		SELECT id, title, description, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
+		SELECT id, title, description, poster_url, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
 		FROM contents
 		WHERE id = $1
 	`
@@ -49,6 +50,7 @@ func (r *ContentPostgresRepository) GetContentByID(ctx context.Context, id strin
 		&content.ID,
 		&content.Title,
 		&content.Description,
+		&content.PosterURL,
 		&content.Type,
 		&content.Genre,
 		&content.ReleaseYear,
@@ -77,7 +79,7 @@ func (r *ContentPostgresRepository) ListContents(ctx context.Context, page, limi
 	offset := (page - 1) * limit
 
 	query := `
-		SELECT id, title, description, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
+		SELECT id, title, description, poster_url, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
 		FROM contents
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2
@@ -97,14 +99,15 @@ func (r *ContentPostgresRepository) UpdateContent(ctx context.Context, content *
 		UPDATE contents
 		SET title = $1,
 		    description = $2,
-		    type = $3,
-		    genre = $4,
-		    release_year = $5,
-		    rating = $6,
-		    is_featured = $7,
-		    is_trending = $8,
+		    poster_url = $3,
+		    type = $4,
+		    genre = $5,
+		    release_year = $6,
+		    rating = $7,
+		    is_featured = $8,
+		    is_trending = $9,
 		    updated_at = NOW()
-		WHERE id = $9
+		WHERE id = $10
 		RETURNING updated_at
 	`
 
@@ -113,6 +116,7 @@ func (r *ContentPostgresRepository) UpdateContent(ctx context.Context, content *
 		query,
 		content.Title,
 		content.Description,
+		content.PosterURL,
 		content.Type,
 		content.Genre,
 		content.ReleaseYear,
@@ -131,7 +135,7 @@ func (r *ContentPostgresRepository) DeleteContent(ctx context.Context, id string
 
 func (r *ContentPostgresRepository) SearchContents(ctx context.Context, queryText string) ([]*domain.Content, error) {
 	query := `
-		SELECT id, title, description, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
+		SELECT id, title, description, poster_url, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
 		FROM contents
 		WHERE title ILIKE '%' || $1 || '%'
 		   OR description ILIKE '%' || $1 || '%'
@@ -150,7 +154,7 @@ func (r *ContentPostgresRepository) SearchContents(ctx context.Context, queryTex
 
 func (r *ContentPostgresRepository) GetContentsByGenre(ctx context.Context, genre string) ([]*domain.Content, error) {
 	query := `
-		SELECT id, title, description, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
+		SELECT id, title, description, poster_url, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
 		FROM contents
 		WHERE genre ILIKE $1
 		ORDER BY created_at DESC
@@ -171,7 +175,7 @@ func (r *ContentPostgresRepository) GetTrendingContents(ctx context.Context, lim
 	}
 
 	query := `
-		SELECT id, title, description, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
+		SELECT id, title, description, poster_url, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
 		FROM contents
 		WHERE is_trending = TRUE
 		ORDER BY rating DESC, created_at DESC
@@ -193,7 +197,7 @@ func (r *ContentPostgresRepository) GetFeaturedContents(ctx context.Context, lim
 	}
 
 	query := `
-		SELECT id, title, description, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
+		SELECT id, title, description, poster_url, type, genre, release_year, rating, is_featured, is_trending, created_at, updated_at
 		FROM contents
 		WHERE is_featured = TRUE
 		ORDER BY rating DESC, created_at DESC
@@ -219,6 +223,7 @@ func scanContents(rows *sql.Rows) ([]*domain.Content, error) {
 			&content.ID,
 			&content.Title,
 			&content.Description,
+			&content.PosterURL,
 			&content.Type,
 			&content.Genre,
 			&content.ReleaseYear,
