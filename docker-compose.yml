@@ -107,6 +107,11 @@ services:
     environment:
       CONTENT_DB_HOST: content-postgres
       CONTENT_DB_PORT: 5432
+      CONTENT_DB_USER: postgres
+      CONTENT_DB_PASSWORD: postgres
+      CONTENT_DB_NAME: content_db
+      CONTENT_DATABASE_URL: postgres://postgres:postgres@content-postgres:5432/content_db?sslmode=disable
+      DATABASE_URL: postgres://postgres:postgres@content-postgres:5432/content_db?sslmode=disable
       REDIS_HOST: redis
       NATS_URL: nats://nats:4222
     ports:
@@ -131,6 +136,7 @@ services:
       PLAYBACK_DB_PASSWORD: postgres
       PLAYBACK_DB_NAME: playback_db
       PLAYBACK_DB_URL: postgres://postgres:postgres@playback-postgres:5432/playback_db?sslmode=disable
+      DATABASE_URL: postgres://postgres:postgres@playback-postgres:5432/playback_db?sslmode=disable
       REDIS_HOST: redis
       NATS_URL: nats://nats:4222
     ports:

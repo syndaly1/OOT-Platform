@@ -94,8 +94,8 @@ func main() {
 	mux.HandleFunc("DELETE /api/content/{contentId}", g.deleteContent)
 
 	// Episode routes
-	mux.HandleFunc("POST /api/content/{contentId}/episodes", g.createEpisode)
-	mux.HandleFunc("GET /api/content/{contentId}/episodes", g.listEpisodesByContent)
+	mux.HandleFunc("POST /api/contents/{contentId}/episodes", g.createEpisode)
+	mux.HandleFunc("GET /api/contents/{contentId}/episodes", g.listEpisodesByContent)
 	mux.HandleFunc("GET /api/episodes/{episodeId}", g.getEpisode)
 	mux.HandleFunc("PUT /api/episodes/{episodeId}", g.updateEpisode)
 	mux.HandleFunc("DELETE /api/episodes/{episodeId}", g.deleteEpisode)
