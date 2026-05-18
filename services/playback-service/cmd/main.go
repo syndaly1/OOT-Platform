@@ -13,6 +13,9 @@ import (
 	postgresRepo "streaming-platform/services/playback-service/internal/repository/postgres"
 	"streaming-platform/services/playback-service/internal/usecase"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	natsgo "github.com/nats-io/nats.go"
 	"google.golang.org/grpc"
@@ -27,6 +30,22 @@ func main() {
 		log.Fatal("failed to connect to playback db:", err)
 	}
 	defer db.Close()
+
+	if err := db.Ping(ctx); err != nil {
+		log.Fatal("failed to ping playback db:", err)
+	}
+
+	log.Println("connected to playback PostgreSQL")
+
+	m, err := migrate.New("file://migrations", playbackDatabaseURL())
+	if err != nil {
+		log.Fatal("failed to initialize playback migrations:", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal("failed to apply playback migrations:", err)
+	}
+	log.Println("playback migrations applied")
 
 	natsConn, err := natsgo.Connect(getenv("NATS_URL", "nats://localhost:4222"))
 	if err != nil {

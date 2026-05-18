@@ -12,6 +12,9 @@ import (
 	"content-service/internal/usecase"
 	"content-service/pkg/contentpb"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 )
@@ -28,12 +31,24 @@ func main() {
 	if err := db.Ping(); err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
+	log.Println("connected to PostgreSQL")
+
+	m, err := migrate.New("file://migrations", cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("failed to initialize migrations: %v", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("failed to apply migrations: %v", err)
+	}
+	log.Println("migrations applied")
 
 	publisher, err := events.NewPublisher(cfg.NATSURL)
 	if err != nil {
 		log.Printf("failed to connect to NATS: %v", err)
 	} else {
 		defer publisher.Close()
+		log.Println("connected to NATS")
 	}
 
 	contentRepo := postgres.NewContentPostgresRepository(db)
