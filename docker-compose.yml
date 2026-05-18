@@ -121,8 +121,8 @@ services:
 
   playback-service:
     build:
-      context: ./services/playback-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/playback-service/Dockerfile
     container_name: playback-service
     environment:
       PLAYBACK_DB_HOST: playback-postgres

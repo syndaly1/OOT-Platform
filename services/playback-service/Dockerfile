@@ -1,20 +1,26 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
 COPY go.mod go.sum ./
+COPY proto ./proto
+COPY services/playback-service/go.mod services/playback-service/go.sum ./services/playback-service/
+
+WORKDIR /app/services/playback-service
 RUN go mod download
 
-COPY . .
+WORKDIR /app
+COPY services/playback-service ./services/playback-service
 
-RUN go build -o playback-service ./cmd/main.go
+WORKDIR /app/services/playback-service
+RUN go build -o /app/bin/playback-service ./cmd/main.go
 
 FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=builder /app/playback-service .
-COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/bin/playback-service .
+COPY --from=builder /app/services/playback-service/migrations ./migrations
 
 EXPOSE 50053
 
