@@ -8,17 +8,37 @@ export default function ContinueWatchingSection() {
 
   useEffect(() => {
     async function load() {
-      const profileId = getSelectedProfileId();
-      const progress = await getContinueWatching(profileId);
-      setItems(progress);
+      try {
+        const profileId = getSelectedProfileId();
+
+        if (!profileId) {
+          setItems([]);
+          return;
+        }
+
+        const progress = await getContinueWatching(profileId);
+        const safeProgress = progress.filter((entry) => Boolean(entry.item));
+
+        setItems(safeProgress);
+      } catch (error) {
+        console.error("Failed to load continue watching:", error);
+        setItems([]);
+      }
     }
 
     load();
 
     const handler = () => load();
-    window.addEventListener("storage", handler);
 
-    return () => window.removeEventListener("storage", handler);
+    window.addEventListener("storage", handler);
+    window.addEventListener("auth-changed", handler);
+    window.addEventListener("profile-changed", handler);
+
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("auth-changed", handler);
+      window.removeEventListener("profile-changed", handler);
+    };
   }, []);
 
   if (!items.length) {
@@ -37,22 +57,29 @@ export default function ContinueWatchingSection() {
       </div>
 
       <div className="section-carousel__track">
-        {items.map((entry) => (
-          <div key={`${entry.profileId}-${entry.contentId}`} className="continue-card-wrap">
-            <DramaCard item={entry.item} to={`/watch/${entry.contentId}`} />
+        {items.map((entry) => {
+          const percent =
+            entry.durationSec > 0
+              ? Math.round((entry.currentPositionSec / entry.durationSec) * 100)
+              : Math.round(entry.watchedPercent || 0);
 
-            <div className="progress-line">
-              <span
-                style={{
-                  width: `${Math.min(
-                    100,
-                    Math.round((entry.currentPositionSec / entry.durationSec) * 100)
-                  )}%`,
-                }}
-              />
+          return (
+            <div
+              key={`${entry.profileId}-${entry.contentId}-${entry.episodeId || "episode"}`}
+              className="continue-card-wrap"
+            >
+              <DramaCard item={entry.item} to={`/watch/${entry.contentId}`} />
+
+              <div className="progress-line">
+                <span
+                  style={{
+                    width: `${Math.min(100, percent)}%`,
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

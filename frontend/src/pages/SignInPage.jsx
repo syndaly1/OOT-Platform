@@ -10,7 +10,12 @@ export default function SignInPage() {
     password: "",
   });
 
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (event) => {
+    setError("");
+
     setForm((prev) => ({
       ...prev,
       [event.target.name]: event.target.value,
@@ -20,8 +25,24 @@ export default function SignInPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    await loginUser(form);
-    navigate("/profiles");
+    if (loading) return;
+
+    setError("");
+    setLoading(true);
+
+    try {
+      await loginUser(form);
+      navigate("/profiles");
+    } catch (err) {
+      console.error("Sign in failed:", err);
+
+      setError(
+        err?.message ||
+          "Sign in failed. Check your email and password."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -57,8 +78,14 @@ export default function SignInPage() {
             />
           </label>
 
-          <button type="submit" className="primary-btn">
-            Sign In
+          {error ? (
+            <div className="form-error">
+              {error}
+            </div>
+          ) : null}
+
+          <button type="submit" className="primary-btn" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
       </div>

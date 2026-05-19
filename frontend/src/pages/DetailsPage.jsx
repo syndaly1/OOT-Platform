@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getItemById, getPlaceholderBackground } from "../data/catalog";
+import { getContentById } from "../api/contentApi";
+import { getPlaceholderBackground } from "../data/catalog";
 
 function formatDuration(seconds) {
-  const minutes = Math.round(seconds / 60);
+  const minutes = Math.round((seconds || 3600) / 60);
   return `${minutes} min`;
 }
 
@@ -13,7 +15,7 @@ function formatRegion(region) {
     japan: "Japan",
   };
 
-  return regions[region] || region;
+  return regions[region] || region || "Unknown";
 }
 
 function formatStatus(status) {
@@ -23,12 +25,38 @@ function formatStatus(status) {
     upcoming: "Upcoming",
   };
 
-  return statuses[status] || status;
+  return statuses[status] || status || "Ongoing";
 }
 
 export default function DetailsPage() {
   const { id } = useParams();
-  const item = getItemById(id);
+
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadDetails() {
+      try {
+        const data = await getContentById(id);
+        setItem(data);
+      } catch (error) {
+        console.error("Failed to load details:", error);
+        setItem(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDetails();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <main className="not-found-page">
+        <h1>Loading title...</h1>
+      </main>
+    );
+  }
 
   if (!item) {
     return (
@@ -41,17 +69,19 @@ export default function DetailsPage() {
     );
   }
 
-  const heroStyle = item.imageUrl
+  const imageUrl = item.imageUrl || item.posterUrl;
+
+  const heroStyle = imageUrl
     ? {
-        backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.92), rgba(0,0,0,0.62), rgba(0,0,0,0.25)), url(${item.imageUrl})`,
+        backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.92), rgba(0,0,0,0.62), rgba(0,0,0,0.25)), url(${imageUrl})`,
       }
     : {
         background: getPlaceholderBackground(item.imageLabel),
       };
 
-  const posterStyle = item.imageUrl
+  const posterStyle = imageUrl
     ? {
-        backgroundImage: `url(${item.imageUrl})`,
+        backgroundImage: `url(${imageUrl})`,
       }
     : {
         background: "rgba(0, 0, 0, 0.28)",
@@ -62,18 +92,18 @@ export default function DetailsPage() {
       <section className="details-hero" style={heroStyle}>
         <div className="details-hero__overlay">
           <div className="details-poster" style={posterStyle}>
-            {!item.imageUrl && <span>{item.imageLabel}</span>}
+            {!imageUrl && <span>{item.imageLabel}</span>}
           </div>
 
           <div className="details-info">
-            <span className="hero__tag">{item.collection}</span>
+            <span className="hero__tag">{item.collection || item.genre}</span>
 
             <h1>{item.title}</h1>
 
             <div className="details-meta">
-              <span>{item.year}</span>
+              <span>{item.year || item.releaseYear}</span>
               <span>{formatDuration(item.durationSec)}</span>
-              <span>{item.ageRating}</span>
+              <span>{item.ageRating || "13+"}</span>
               <span>{formatStatus(item.status)}</span>
               <span>{formatRegion(item.region)}</span>
             </div>

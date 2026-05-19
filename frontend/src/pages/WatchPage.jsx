@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getItemById } from "../data/catalog";
+import { getContentById } from "../api/contentApi";
 import { getSelectedProfileId } from "../api/profileApi";
-import { getProgress, updateProgress, markCompleted } from "../api/playbackApi";
+import {
+  getProgress,
+  updateProgress,
+  markCompleted,
+  startPlayback,
+} from "../api/playbackApi";
 
 function formatTime(seconds) {
   if (!Number.isFinite(seconds)) return "0:00";
@@ -13,36 +18,87 @@ function formatTime(seconds) {
   return `${mins}:${String(secs).padStart(2, "0")}`;
 }
 
+function inferVideoUrlFromPoster(item) {
+  const posterUrl = item?.posterUrl || item?.imageUrl || "";
+
+  const match = posterUrl.match(/\/images\/(.+)\.(jpg|jpeg|png|webp)$/i);
+
+  if (!match) {
+    return "/videos/demo-episode.mp4";
+  }
+
+  return `/videos/${match[1]}.mp4`;
+}
+
 export default function WatchPage() {
   const { id } = useParams();
   const videoRef = useRef(null);
+  const lastSavedSecondRef = useRef(-1);
 
-  const item = getItemById(id);
   const profileId = getSelectedProfileId();
 
+  const [item, setItem] = useState(null);
+  const [sessionId, setSessionId] = useState("session-created");
   const [showSkipIntro, setShowSkipIntro] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [resumeLoaded, setResumeLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadResume() {
-      if (!item || !videoRef.current) return;
+    async function loadItemAndResume() {
+      try {
+        const content = await getContentById(id);
+        setItem(content);
 
-      const progress = await getProgress({
-        profileId,
-        contentId: item.id,
-      });
+        try {
+          const startData = await startPlayback({
+            profileId,
+            contentId: content.id,
+            episodeId: "episode-1",
+            durationSec: content.durationSec || 3600,
+            device: "web",
+          });
 
-      if (progress.currentPositionSec > 0 && !progress.completed) {
-        videoRef.current.currentTime = progress.currentPositionSec;
-        setCurrentTime(progress.currentPositionSec);
+          setSessionId(startData.sessionId || "session-created");
+        } catch (error) {
+          console.warn("Start playback failed, continuing anyway:", error);
+        }
+
+        const progress = await getProgress({
+          profileId,
+          contentId: content.id,
+          episodeId: "episode-1",
+        });
+
+        if (progress.currentPositionSec > 0 && !progress.completed) {
+          setCurrentTime(progress.currentPositionSec);
+        }
+      } catch (error) {
+        console.error("Failed to load watch page:", error);
+      } finally {
+        setResumeLoaded(true);
+        setLoading(false);
       }
-
-      setResumeLoaded(true);
     }
 
-    loadResume();
-  }, [item, profileId]);
+    loadItemAndResume();
+  }, [id, profileId]);
+
+  useEffect(() => {
+    if (!videoRef.current || !resumeLoaded) return;
+
+    if (currentTime > 0) {
+      videoRef.current.currentTime = currentTime;
+    }
+  }, [resumeLoaded, currentTime]);
+
+  if (loading) {
+    return (
+      <main className="not-found-page">
+        <h1>Loading video...</h1>
+      </main>
+    );
+  }
 
   if (!item) {
     return (
@@ -55,54 +111,78 @@ export default function WatchPage() {
     );
   }
 
+  const durationSec = item.durationSec || 3600;
+  const introStartSec = item.introStartSec ?? 8;
+  const introEndSec = item.introEndSec ?? 72;
+  const videoUrl = item.videoUrl || "/videos/demo.mp4";
+
+  const saveProgress = async (time) => {
+    try {
+      await updateProgress({
+        profileId,
+        contentId: item.id,
+        episodeId: "episode-1",
+        sessionId,
+        currentPositionSec: time,
+        durationSec,
+      });
+    } catch (error) {
+      console.warn("Failed to save progress:", error);
+    }
+  };
+
   const handleTimeUpdate = async () => {
     if (!videoRef.current) return;
 
     const time = Math.floor(videoRef.current.currentTime);
     setCurrentTime(time);
 
-    const insideIntro =
-      time >= item.introStartSec && time <= item.introEndSec;
-
+    const insideIntro = time >= introStartSec && time <= introEndSec;
     setShowSkipIntro(insideIntro);
 
-    if (time % 10 === 0) {
-      await updateProgress({
-        profileId,
-        contentId: item.id,
-        currentPositionSec: time,
-      });
+    const shouldSave =
+      time > 0 &&
+      time % 10 === 0 &&
+      lastSavedSecondRef.current !== time;
+
+    if (shouldSave) {
+      lastSavedSecondRef.current = time;
+      await saveProgress(time);
     }
   };
 
   const handlePause = async () => {
     if (!videoRef.current) return;
 
-    await updateProgress({
-      profileId,
-      contentId: item.id,
-      currentPositionSec: Math.floor(videoRef.current.currentTime),
-    });
+    const time = Math.floor(videoRef.current.currentTime);
+    lastSavedSecondRef.current = time;
+
+    await saveProgress(time);
   };
 
   const handleEnded = async () => {
-    await markCompleted({
-      profileId,
-      contentId: item.id,
-    });
+    try {
+      await markCompleted({
+        profileId,
+        contentId: item.id,
+        episodeId: "episode-1",
+        sessionId,
+        durationSec,
+      });
+    } catch (error) {
+      console.warn("Failed to mark completed:", error);
+    }
   };
 
   const skipIntro = async () => {
     if (!videoRef.current) return;
 
-    videoRef.current.currentTime = item.introEndSec;
+    videoRef.current.currentTime = introEndSec;
+    setCurrentTime(introEndSec);
     setShowSkipIntro(false);
+    lastSavedSecondRef.current = introEndSec;
 
-    await updateProgress({
-      profileId,
-      contentId: item.id,
-      currentPositionSec: item.introEndSec,
-    });
+    await saveProgress(introEndSec);
   };
 
   return (
@@ -115,7 +195,7 @@ export default function WatchPage() {
         <div>
           <h1>{item.title}</h1>
           <p>
-            Current time: {formatTime(currentTime)} / {formatTime(item.durationSec)}
+            Current time: {formatTime(currentTime)} / {formatTime(durationSec)}
           </p>
         </div>
       </section>
@@ -127,7 +207,7 @@ export default function WatchPage() {
 
         <video
           ref={videoRef}
-          src={item.videoUrl}
+          src={videoUrl}
           controls
           className="video-player"
           onTimeUpdate={handleTimeUpdate}
@@ -140,34 +220,6 @@ export default function WatchPage() {
             Skip Intro
           </button>
         ) : null}
-      </section>
-
-      <section className="watch-info-panel">
-        <h2>Playback data</h2>
-
-        <div className="watch-info-grid">
-          <div>
-            <span>Profile ID</span>
-            <strong>{profileId}</strong>
-          </div>
-
-          <div>
-            <span>Content ID</span>
-            <strong>{item.id}</strong>
-          </div>
-
-          <div>
-            <span>Intro</span>
-            <strong>
-              {formatTime(item.introStartSec)} - {formatTime(item.introEndSec)}
-            </strong>
-          </div>
-
-          <div>
-            <span>Status</span>
-            <strong>{item.status}</strong>
-          </div>
-        </div>
       </section>
     </main>
   );

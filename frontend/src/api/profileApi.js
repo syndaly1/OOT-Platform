@@ -1,146 +1,181 @@
-import { getCurrentAccountId } from "./authApi";
+import { getCurrentUser } from "./authApi";
 
-const BASE_URL = "/api";
 const SELECTED_PROFILE_KEY = "dorabox:selectedProfileId";
+const PROFILES_KEY = "dorabox:profiles";
 
-async function request(path, options = {}) {
-  const token = localStorage.getItem("dorabox:accessToken");
+function notifyProfileChanged() {
+  window.dispatchEvent(new Event("profile-changed"));
+}
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-  });
+function getProfilesMap() {
+  const raw = localStorage.getItem(PROFILES_KEY);
 
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    throw new Error(data.error || data.message || "Request failed");
+  if (!raw) {
+    return {};
   }
 
-  return data;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+function saveProfilesMap(map) {
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(map));
+  notifyProfileChanged();
+}
+
+function getAccountId() {
+  const user = getCurrentUser();
+  return user?.accountId || user?.id || "guest-account";
+}
+
+function getDefaultProfile() {
+  const user = getCurrentUser();
+
+  return {
+    id: "profile-test-1",
+    profileId: "profile-test-1",
+    accountId: getAccountId(),
+    name: user?.fullName || user?.username || "Main",
+    type: "adult",
+    language: "en",
+    avatar: "👤",
+  };
 }
 
 function normalizeProfile(profile) {
   return {
-    id: profile.profileId || profile.profile_id || profile.id,
-    profileId: profile.profileId || profile.profile_id || profile.id,
-    accountId: profile.accountId || profile.account_id,
-    name: profile.name || "Profile",
-    type: normalizeProfileType(profile.type),
+    id: profile.id || profile.profileId || crypto.randomUUID(),
+    profileId: profile.profileId || profile.id || crypto.randomUUID(),
+    accountId: profile.accountId || getAccountId(),
+    name: profile.name || "Main",
+    type: String(profile.type || "adult").toLowerCase(),
     language: profile.language || "en",
     avatar: profile.avatar || "👤",
-    createdAt: profile.createdAt || profile.created_at || "",
   };
 }
 
-function normalizeProfileType(type) {
-  if (typeof type === "number") {
-    if (type === 1) return "adult";
-    if (type === 2) return "teen";
-    if (type === 3) return "kid";
+export async function getProfiles() {
+  const user = getCurrentUser();
+  const accountId = getAccountId();
+
+  if (!user) {
+    return [getDefaultProfile()];
   }
 
-  const raw = String(type || "adult").toLowerCase();
-
-  if (raw.includes("teen")) return "teen";
-  if (raw.includes("kid")) return "kid";
-  if (raw.includes("child")) return "kid";
-  if (raw.includes("family")) return "adult";
-
-  return "adult";
-}
-
-export async function getProfiles(accountIdArg) {
-  const accountId = accountIdArg || getCurrentAccountId();
-
-  if (!accountId) {
-    return [];
+  if (user.accountType !== "family") {
+    return [getDefaultProfile()];
   }
 
-  const data = await request(`/profiles?accountId=${encodeURIComponent(accountId)}`);
+  const map = getProfilesMap();
+  const profiles = map[accountId] || [];
 
-  const profiles = data.profiles || [];
+  if (!profiles.length) {
+    const defaultProfile = getDefaultProfile();
+    map[accountId] = [defaultProfile];
+    saveProfilesMap(map);
+    return [defaultProfile];
+  }
 
   return profiles.map(normalizeProfile);
 }
 
 export async function createProfile(payload) {
-  const accountId = payload.accountId || payload.account_id || getCurrentAccountId();
+  const user = getCurrentUser();
 
-  if (!accountId) {
-    throw new Error("No accountId found. Please login first.");
+  if (!user) {
+    throw new Error("Please sign in before creating profiles.");
   }
 
-  const data = await request("/profiles", {
-    method: "POST",
-    body: JSON.stringify({
-      accountId,
-      name: payload.name,
-      type: payload.type || "adult",
-      language: payload.language || "en",
-      avatar: payload.avatar || "👤",
-    }),
-  });
+  if (user.accountType !== "family") {
+    throw new Error("Only Family accounts can create multiple profiles.");
+  }
 
-  const profileId = data.profileId || data.profile_id;
+  const accountId = getAccountId();
+  const map = getProfilesMap();
 
-  return {
-    id: profileId,
-    profileId,
+  const profile = normalizeProfile({
+    id: crypto.randomUUID(),
+    profileId: crypto.randomUUID(),
     accountId,
     name: payload.name,
     type: payload.type || "adult",
     language: payload.language || "en",
     avatar: payload.avatar || "👤",
-  };
+  });
+
+  map[accountId] = [...(map[accountId] || []), profile];
+  saveProfilesMap(map);
+
+  return profile;
 }
 
 export async function updateProfile(profileId, payload) {
-  const data = await request(`/profiles/${profileId}`, {
-    method: "PUT",
-    body: JSON.stringify({
-      name: payload.name,
-      language: payload.language || "en",
-      avatar: payload.avatar || "👤",
-    }),
-  });
+  const accountId = getAccountId();
+  const map = getProfilesMap();
+  const profiles = map[accountId] || [];
 
-  return data;
+  map[accountId] = profiles.map((profile) =>
+    profile.id === profileId || profile.profileId === profileId
+      ? normalizeProfile({ ...profile, ...payload })
+      : profile
+  );
+
+  saveProfilesMap(map);
+
+  return map[accountId].find(
+    (profile) => profile.id === profileId || profile.profileId === profileId
+  );
 }
 
 export async function deleteProfile(profileId) {
-  const data = await request(`/profiles/${profileId}`, {
-    method: "DELETE",
-  });
+  const accountId = getAccountId();
+  const map = getProfilesMap();
+  const profiles = map[accountId] || [];
 
-  const selectedId = getSelectedProfileId();
+  map[accountId] = profiles.filter(
+    (profile) => profile.id !== profileId && profile.profileId !== profileId
+  );
 
-  if (selectedId === profileId) {
+  saveProfilesMap(map);
+
+  if (getSelectedProfileId() === profileId) {
     localStorage.removeItem(SELECTED_PROFILE_KEY);
   }
 
-  return data;
+  notifyProfileChanged();
+
+  return { message: "Profile deleted." };
 }
 
 export function selectProfile(profileId) {
-  localStorage.setItem(SELECTED_PROFILE_KEY, profileId);
+  localStorage.setItem(SELECTED_PROFILE_KEY, profileId || "profile-test-1");
+  notifyProfileChanged();
 }
 
 export function getSelectedProfileId() {
-  return localStorage.getItem(SELECTED_PROFILE_KEY);
+  return localStorage.getItem(SELECTED_PROFILE_KEY) || "profile-test-1";
 }
 
-export async function getSelectedProfile() {
-  const profiles = await getProfiles();
+export function getSelectedProfile() {
   const selectedId = getSelectedProfileId();
+  const user = getCurrentUser();
 
-  if (!profiles.length) {
-    return null;
+  if (!user || user.accountType !== "family") {
+    return getDefaultProfile();
   }
 
-  return profiles.find((profile) => profile.id === selectedId) || profiles[0];
+  const accountId = getAccountId();
+  const map = getProfilesMap();
+  const profiles = map[accountId] || [];
+
+  return (
+    profiles.find(
+      (profile) => profile.id === selectedId || profile.profileId === selectedId
+    ) ||
+    profiles[0] ||
+    getDefaultProfile()
+  );
 }

@@ -1,0 +1,86 @@
+INSERT INTO contents (
+    id,
+    title,
+    description,
+    poster_url,
+    type,
+    genre,
+    release_year,
+    rating,
+    is_featured,
+    is_trending,
+    created_at,
+    updated_at
+)
+VALUES
+-- Latest Update, 11
+('10000000-0000-0000-0000-000000000001', 'Night Has Come', 'A Korean mystery thriller where a school trip becomes a deadly mafia game.', '/images/latest-update-1.jpg', 'tv_series', 'latest-update kdrama south-korea completed english 16+', 2023, 8.7, true, true, NOW(), NOW()),
+('10000000-0000-0000-0000-000000000002', 'Hidden Love', 'A Chinese romance about quiet first love, reunion, and soft emotional slow burn.', '/images/latest-update-2.jpg', 'tv_series', 'latest-update cdrama china completed english 13+', 2023, 8.6, false, true, NOW(), NOW()),
+('10000000-0000-0000-0000-000000000003', 'First Love', 'A Japanese romance drama about memory, timing, and unfinished feelings.', '/images/latest-update-3.jpg', 'tv_series', 'latest-update jdrama japan completed russian 16+', 2022, 8.4, true, false, NOW(), NOW()),
+('10000000-0000-0000-0000-000000000004', 'Twinkling Watermelon', 'A Korean time-slip youth drama about music, family, friendship, and growing up.', '/images/latest-update-4.jpg', 'tv_series', 'latest-update kdrama south-korea completed english 13+', 2023, 8.8, false, true, NOW(), NOW()),
+('10000000-0000-0000-0000-000000000005', 'The First Frost', 'A Chinese romance about two people reconnecting after years apart.', '/images/latest-update-5.jpg', 'tv_series', 'latest-update cdrama china completed russian 16+', 2025, 8.5, true, true, NOW(), NOW()),
+('10000000-0000-0000-0000-000000000006', 'Alice in Borderland', 'A Japanese survival thriller where people are forced to play deadly games.', '/images/latest-update-6.jpg', 'tv_series', 'latest-update jdrama japan completed english 18+', 2020, 8.3, true, true, NOW(), NOW()),
+('10000000-0000-0000-0000-000000000007', 'Lovely Runner', 'A Korean fantasy romance about a fan who gets a second chance to save the idol she loves.', '/images/latest-update-7.jpg', 'tv_series', 'latest-update kdrama south-korea completed english 13+', 2024, 8.7, false, true, NOW(), NOW()),
+('10000000-0000-0000-0000-000000000008', 'When I Fly Towards You', 'A Chinese youth romance about school life, awkward feelings, and first love.', '/images/latest-update-8.jpg', 'tv_series', 'latest-update cdrama china completed russian 13+', 2023, 8.4, false, false, NOW(), NOW()),
+('10000000-0000-0000-0000-000000000009', 'Silent', 'A Japanese emotional drama about grief, communication, and love after silence changes everything.', '/images/latest-update-9.jpg', 'tv_series', 'latest-update jdrama japan completed english 13+', 2022, 8.2, false, false, NOW(), NOW()),
+('10000000-0000-0000-0000-000000000010', 'My Demon', 'A Korean fantasy romance about a demon who loses his powers after becoming involved with a wealthy heiress.', '/images/latest-update-10.jpg', 'tv_series', 'latest-update kdrama south-korea completed russian 16+', 2023, 8.1, false, true, NOW(), NOW()),
+('10000000-0000-0000-0000-000000000011', 'Reset', 'A Chinese time-loop thriller where two strangers relive the same bus explosion again and again.', '/images/latest-update-11.jpg', 'tv_series', 'latest-update cdrama china completed english 16+', 2022, 8.6, false, true, NOW(), NOW()),
+
+-- Top K-Drama, 11
+('20000000-0000-0000-0000-000000000001', 'Night Has Come', 'A Korean mystery thriller where a school trip turns into a deadly mafia game.', '/images/kdrama-1.jpg', 'tv_series', 'top-k-drama kdrama south-korea completed english 16+', 2023, 8.7, true, true, NOW(), NOW()),
+('20000000-0000-0000-0000-000000000002', 'Twinkling Watermelon', 'A time-slip youth drama about music, family, friendship, and growing up.', '/images/kdrama-2.jpg', 'tv_series', 'top-k-drama kdrama south-korea completed english 13+', 2023, 8.8, false, true, NOW(), NOW()),
+('20000000-0000-0000-0000-000000000003', 'True Beauty', 'A romantic school comedy about beauty standards, insecurity, and being seen beyond appearances.', '/images/kdrama-3.jpg', 'tv_series', 'top-k-drama kdrama south-korea completed english 13+', 2020, 8.1, false, true, NOW(), NOW()),
+('20000000-0000-0000-0000-000000000004', 'Lovely Runner', 'A fantasy romance about a devoted fan who gets a second chance to save the idol she loves.', '/images/kdrama-4.jpg', 'tv_series', 'top-k-drama kdrama south-korea completed english 13+', 2024, 8.7, false, true, NOW(), NOW()),
+('20000000-0000-0000-0000-000000000005', 'Head Over Heels', 'A supernatural youth romance about fate, curses, and dangerous secrets.', '/images/kdrama-5.jpg', 'tv_series', 'top-k-drama kdrama south-korea ongoing english 16+', 2025, 8.0, false, false, NOW(), NOW()),
+('20000000-0000-0000-0000-000000000006', 'My Demon', 'A fantasy romance about a cold demon who loses his powers after meeting a wealthy heiress.', '/images/kdrama-6.jpg', 'tv_series', 'top-k-drama kdrama south-korea completed english 16+', 2023, 8.1, false, true, NOW(), NOW()),
+('20000000-0000-0000-0000-000000000007', 'Good Boy', 'An action comedy drama about people chasing justice in dangerous and ridiculous situations.', '/images/kdrama-7.jpg', 'tv_series', 'top-k-drama kdrama south-korea ongoing english 16+', 2025, 7.9, false, false, NOW(), NOW()),
+('20000000-0000-0000-0000-000000000008', 'Running Man', 'A long-running Korean variety show where celebrities complete missions and betray each other casually.', '/images/kdrama-8.jpg', 'tv_series', 'top-k-drama kdrama south-korea ongoing english 13+', 2010, 8.5, false, true, NOW(), NOW()),
+('20000000-0000-0000-0000-000000000009', 'Queen of Tears', 'A melodrama romance about a married couple facing crisis, pride, illness, and fragile love.', '/images/kdrama-9.jpg', 'tv_series', 'top-k-drama kdrama south-korea completed english 16+', 2024, 8.8, true, true, NOW(), NOW()),
+('20000000-0000-0000-0000-000000000010', 'Business Proposal', 'A workplace romantic comedy about a fake blind date that becomes a contract relationship.', '/images/kdrama-10.jpg', 'tv_series', 'top-k-drama kdrama south-korea completed english 13+', 2022, 8.3, false, true, NOW(), NOW()),
+('20000000-0000-0000-0000-000000000011', 'Twenty Five Twenty One', 'A nostalgic youth romance about ambition, friendship, fencing, first love, and growing up.', '/images/kdrama-11.jpg', 'tv_series', 'top-k-drama kdrama south-korea completed english 13+', 2022, 8.6, false, true, NOW(), NOW()),
+
+-- Top C-Drama, 11
+('30000000-0000-0000-0000-000000000001', 'Hidden Love', 'A soft Chinese romance about first love, reunion, and emotional slow burn.', '/images/cdrama-1.jpg', 'tv_series', 'top-c-drama cdrama china completed english 13+', 2023, 8.6, true, true, NOW(), NOW()),
+('30000000-0000-0000-0000-000000000002', 'The First Frost', 'A romance drama about two people reconnecting after years apart.', '/images/cdrama-2.jpg', 'tv_series', 'top-c-drama cdrama china completed english 16+', 2025, 8.5, true, true, NOW(), NOW()),
+('30000000-0000-0000-0000-000000000003', 'Love Between Fairy and Devil', 'A fantasy romance about a feared demon lord and a fairy whose lives become magically connected.', '/images/cdrama-3.jpg', 'tv_series', 'top-c-drama cdrama china completed english 13+', 2022, 8.4, false, true, NOW(), NOW()),
+('30000000-0000-0000-0000-000000000004', 'When I Fly Towards You', 'A youth romance about school life, awkward affection, and first love.', '/images/cdrama-4.jpg', 'tv_series', 'top-c-drama cdrama china completed english 13+', 2023, 8.4, false, false, NOW(), NOW()),
+('30000000-0000-0000-0000-000000000005', 'Falling Into Your Smile', 'A romantic comedy set in esports, rivalry, gaming, and romance.', '/images/cdrama-5.jpg', 'tv_series', 'top-c-drama cdrama china completed english 13+', 2021, 8.1, false, true, NOW(), NOW()),
+('30000000-0000-0000-0000-000000000006', 'You Are My Glory', 'A romance between a popular actress and an aerospace engineer who reconnect through an online game.', '/images/cdrama-6.jpg', 'tv_series', 'top-c-drama cdrama china completed english 13+', 2021, 8.2, false, false, NOW(), NOW()),
+('30000000-0000-0000-0000-000000000007', 'Reset', 'A time-loop thriller where two strangers repeatedly wake up before a bus explosion.', '/images/cdrama-7.jpg', 'tv_series', 'top-c-drama cdrama china completed english 16+', 2022, 8.6, false, true, NOW(), NOW()),
+('30000000-0000-0000-0000-000000000008', 'Go Ahead', 'A family drama about three unrelated children who grow up as siblings.', '/images/cdrama-8.jpg', 'tv_series', 'top-c-drama cdrama china completed english 13+', 2020, 8.7, false, true, NOW(), NOW()),
+('30000000-0000-0000-0000-000000000009', 'The Long Ballad', 'A historical drama about revenge, war, politics, and a princess trying to survive.', '/images/cdrama-9.jpg', 'tv_series', 'top-c-drama cdrama china completed english 16+', 2021, 8.0, false, false, NOW(), NOW()),
+('30000000-0000-0000-0000-000000000010', 'Meet Yourself', 'A healing slice-of-life romance about grief, recovery, community, and quiet village life.', '/images/cdrama-10.jpg', 'tv_series', 'top-c-drama cdrama china completed english 13+', 2023, 8.5, false, true, NOW(), NOW()),
+('30000000-0000-0000-0000-000000000011', 'Amidst a Snowstorm of Love', 'A winter romance about billiards, ambition, snow-covered streets, and slow feelings.', '/images/cdrama-11.jpg', 'tv_series', 'top-c-drama cdrama china completed english 13+', 2024, 8.2, false, false, NOW(), NOW()),
+
+-- Top J-Drama, 11
+('40000000-0000-0000-0000-000000000001', 'Alice in Borderland', 'A Japanese survival thriller where people are trapped in an empty Tokyo and forced to play deadly games.', '/images/jdrama-1.jpg', 'tv_series', 'top-j-drama jdrama japan completed english 18+', 2020, 8.3, true, true, NOW(), NOW()),
+('40000000-0000-0000-0000-000000000002', 'First Love', 'A romantic drama about first love, memory, and timing.', '/images/jdrama-2.jpg', 'tv_series', 'top-j-drama jdrama japan completed english 16+', 2022, 8.4, true, false, NOW(), NOW()),
+('40000000-0000-0000-0000-000000000003', 'Silent', 'A quiet emotional drama about love, loss, and communication after hearing loss changes everything.', '/images/jdrama-3.jpg', 'tv_series', 'top-j-drama jdrama japan completed english 13+', 2022, 8.2, false, false, NOW(), NOW()),
+('40000000-0000-0000-0000-000000000004', 'My Love Mix-Up', 'A school romance comedy about mistaken crushes, awkward confessions, and figuring out feelings.', '/images/jdrama-4.jpg', 'tv_series', 'top-j-drama jdrama japan completed english 13+', 2021, 8.0, false, false, NOW(), NOW()),
+('40000000-0000-0000-0000-000000000005', 'Good Morning Call', 'A romantic comedy about a girl who moves into the house of a popular boy from school.', '/images/jdrama-5.jpg', 'tv_series', 'top-j-drama jdrama japan completed english 13+', 2016, 7.8, false, false, NOW(), NOW()),
+('40000000-0000-0000-0000-000000000006', 'Brush Up Life', 'A clever life-retry drama about a woman who gets a chance to live again from childhood.', '/images/jdrama-6.jpg', 'tv_series', 'top-j-drama jdrama japan completed english 13+', 2023, 8.3, false, true, NOW(), NOW()),
+('40000000-0000-0000-0000-000000000007', 'From Me to You', 'A gentle romance about a shy girl whose feelings slowly reach the boy she admires.', '/images/jdrama-7.jpg', 'tv_series', 'top-j-drama jdrama japan completed english 13+', 2023, 8.1, false, false, NOW(), NOW()),
+('40000000-0000-0000-0000-000000000008', 'Nodame Cantabile', 'A music-centered romantic comedy about a chaotic piano prodigy and a perfectionist music student.', '/images/jdrama-8.jpg', 'tv_series', 'top-j-drama jdrama japan completed english 13+', 2006, 8.4, false, false, NOW(), NOW()),
+('40000000-0000-0000-0000-000000000009', 'One Litre of Tears', 'A heartbreaking drama about a girl diagnosed with a degenerative illness.', '/images/jdrama-9.jpg', 'tv_series', 'top-j-drama jdrama japan completed english 13+', 2005, 8.6, false, false, NOW(), NOW()),
+('40000000-0000-0000-0000-000000000010', 'Trillion Game', 'A business drama about two ambitious men trying to build a trillion-dollar company.', '/images/jdrama-10.jpg', 'tv_series', 'top-j-drama jdrama japan completed english 13+', 2023, 7.9, false, true, NOW(), NOW()),
+('40000000-0000-0000-0000-000000000011', 'Pending Train', 'A sci-fi suspense drama about passengers trapped on a train that arrives in a devastated future.', '/images/jdrama-11.jpg', 'tv_series', 'top-j-drama jdrama japan completed english 16+', 2023, 7.8, false, false, NOW(), NOW()),
+
+-- Upcoming, 7
+('50000000-0000-0000-0000-000000000001', 'The Remarried Empress', 'An upcoming royal drama about betrayal, power, dignity, and a second marriage.', '/images/upcoming-1.jpg', 'tv_series', 'upcoming kdrama south-korea upcoming english 16+', 2026, 0, true, false, NOW(), NOW()),
+('50000000-0000-0000-0000-000000000002', 'Mercy for None', 'A Korean crime action drama about a former gangster dragged back into violence after tragedy.', '/images/upcoming-2.jpg', 'tv_series', 'upcoming kdrama south-korea upcoming english 18+', 2025, 0, false, false, NOW(), NOW()),
+('50000000-0000-0000-0000-000000000003', 'The Murky Stream', 'A Korean historical action drama about corruption, survival, and dangerous waters.', '/images/upcoming-3.jpg', 'tv_series', 'upcoming kdrama south-korea upcoming russian 16+', 2025, 0, false, false, NOW(), NOW()),
+('50000000-0000-0000-0000-000000000004', 'Moonlight Mystique', 'A Chinese fantasy romance about gods, demons, identity, and forbidden feelings.', '/images/upcoming-4.jpg', 'tv_series', 'upcoming cdrama china upcoming english 13+', 2025, 0, false, false, NOW(), NOW()),
+('50000000-0000-0000-0000-000000000005', 'Northward', 'A Chinese family and coming-of-age drama about migration, distance, and belonging.', '/images/upcoming-5.jpg', 'tv_series', 'upcoming cdrama china upcoming russian 13+', 2025, 0, false, false, NOW(), NOW()),
+('50000000-0000-0000-0000-000000000006', 'Glass Heart', 'A Japanese music drama about young musicians chasing dreams and breaking apart.', '/images/upcoming-6.jpg', 'tv_series', 'upcoming jdrama japan upcoming english 13+', 2025, 0, false, false, NOW(), NOW()),
+('50000000-0000-0000-0000-000000000007', 'Romantics Anonymous', 'A Japanese romantic drama about carefully controlled lives disrupted by unexpected love.', '/images/upcoming-7.jpg', 'tv_series', 'upcoming jdrama japan upcoming russian 13+', 2025, 0, false, false, NOW(), NOW())
+ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    description = EXCLUDED.description,
+    poster_url = EXCLUDED.poster_url,
+    type = EXCLUDED.type,
+    genre = EXCLUDED.genre,
+    release_year = EXCLUDED.release_year,
+    rating = EXCLUDED.rating,
+    is_featured = EXCLUDED.is_featured,
+    is_trending = EXCLUDED.is_trending,
+    updated_at = NOW();

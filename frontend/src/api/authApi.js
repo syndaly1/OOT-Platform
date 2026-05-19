@@ -1,144 +1,101 @@
-const BASE_URL = "/api";
-
 const AUTH_USER_KEY = "dorabox:user";
 const AUTH_TOKEN_KEY = "dorabox:accessToken";
-const REFRESH_TOKEN_KEY = "dorabox:refreshToken";
-const ACCOUNT_ID_KEY = "dorabox:accountId";
+const AUTH_REFRESH_TOKEN_KEY = "dorabox:refreshToken";
+const AUTH_ACCOUNTS_KEY = "dorabox:accounts";
 
-async function request(path, options = {}) {
-  const token = localStorage.getItem(AUTH_TOKEN_KEY);
-
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-  });
-
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    throw new Error(data.error || data.message || "Request failed");
-  }
-
-  return data;
+function notifyAuthChanged() {
+  window.dispatchEvent(new Event("auth-changed"));
 }
 
-function normalizeUser(data, fallback = {}) {
+function getAccounts() {
+  const raw = localStorage.getItem(AUTH_ACCOUNTS_KEY);
+
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+function saveAccounts(accounts) {
+  localStorage.setItem(AUTH_ACCOUNTS_KEY, JSON.stringify(accounts));
+}
+
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+function makeUserFromAccount(account) {
   return {
-    id: data.accountId || data.account_id || fallback.id || fallback.accountId,
-    accountId: data.accountId || data.account_id || fallback.accountId || fallback.id,
-    email: data.email || fallback.email || "",
-    username: data.username || fallback.username || fallback.fullName || "User",
-    fullName: data.username || fallback.fullName || fallback.username || "User",
-    isVerified: data.isVerified ?? data.is_verified ?? fallback.isVerified ?? false,
-    accountType: fallback.accountType || "standard",
-    createdAt: data.createdAt || data.created_at || fallback.createdAt || "",
+    id: account.id,
+    accountId: account.id,
+    username: account.username || account.fullName || account.email,
+    fullName: account.fullName || account.username || account.email,
+    email: account.email,
+    accountType: account.accountType || "basic",
+  };
+}
+
+function saveAuthSession(user) {
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  localStorage.setItem(AUTH_TOKEN_KEY, "frontend-demo-session");
+  localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, "frontend-demo-refresh");
+  notifyAuthChanged();
+
+  return {
+    user,
+    accessToken: "frontend-demo-session",
+    refreshToken: "frontend-demo-refresh",
+    message: "Authenticated successfully.",
   };
 }
 
 export async function registerUser(payload) {
-  const username =
-    payload.username ||
-    payload.fullName ||
-    payload.name ||
-    payload.email?.split("@")[0] ||
-    "user";
+  const email = normalizeEmail(payload.email);
+  const accounts = getAccounts();
 
-  const data = await request("/auth/register", {
-    method: "POST",
-    body: JSON.stringify({
-      email: payload.email,
-      username,
-      password: payload.password,
-    }),
-  });
+  const existing = accounts.find((account) => normalizeEmail(account.email) === email);
 
-  const user = normalizeUser(
-    {
-      accountId: data.accountId,
-      email: payload.email,
-      username,
-      isVerified: false,
-    },
-    payload
-  );
+  if (existing) {
+    throw new Error("This email is already registered. Please sign in instead.");
+  }
 
-  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-  localStorage.setItem(ACCOUNT_ID_KEY, user.accountId);
-
-  return {
-    user,
-    accountId: user.accountId,
-    message: data.message || "Registration completed.",
+  const account = {
+    id: crypto.randomUUID(),
+    fullName: payload.fullName || payload.username || email,
+    username: payload.username || payload.fullName || email,
+    email,
+    password: payload.password,
+    accountType: payload.accountType || "basic",
+    createdAt: new Date().toISOString(),
   };
+
+  saveAccounts([...accounts, account]);
+
+  const user = makeUserFromAccount(account);
+  return saveAuthSession(user);
 }
 
 export async function loginUser(payload) {
-  const data = await request("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({
-      email: payload.email,
-      password: payload.password,
-    }),
-  });
+  const email = normalizeEmail(payload.email);
+  const accounts = getAccounts();
 
-  localStorage.setItem(AUTH_TOKEN_KEY, data.accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
-  localStorage.setItem(ACCOUNT_ID_KEY, data.accountId);
+  const account = accounts.find((item) => normalizeEmail(item.email) === email);
 
-  let user = normalizeUser(
-    {
-      accountId: data.accountId,
-      email: payload.email,
-    },
-    payload
-  );
-
-  try {
-    const account = await request(`/auth/account/${data.accountId}`);
-    user = normalizeUser(account, {
-      accountId: data.accountId,
-      email: payload.email,
-    });
-  } catch {
-    // Login still succeeds even if account fetch fails.
-    // Frontend can survive. Barely. Like all of us.
+  if (!account) {
+    throw new Error("Account not found. Please register first.");
   }
 
-  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-
-  return {
-    user,
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken,
-    accountId: data.accountId,
-  };
-}
-
-export async function refreshAccessToken() {
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-
-  if (!refreshToken) {
-    throw new Error("No refresh token found");
+  if (account.password !== payload.password) {
+    throw new Error("Incorrect password.");
   }
 
-  const data = await request("/auth/refresh", {
-    method: "POST",
-    body: JSON.stringify({
-      refreshToken,
-    }),
-  });
-
-  localStorage.setItem(AUTH_TOKEN_KEY, data.accessToken);
-
-  if (data.refreshToken) {
-    localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
-  }
-
-  return data;
+  const user = makeUserFromAccount(account);
+  return saveAuthSession(user);
 }
 
 export function getCurrentUser() {
@@ -151,48 +108,37 @@ export function getCurrentUser() {
   try {
     return JSON.parse(raw);
   } catch {
-    localStorage.removeItem(AUTH_USER_KEY);
     return null;
   }
-}
-
-export function getCurrentAccountId() {
-  const user = getCurrentUser();
-  return (
-    localStorage.getItem(ACCOUNT_ID_KEY) ||
-    user?.accountId ||
-    user?.id ||
-    null
-  );
 }
 
 export function getAccessToken() {
   return localStorage.getItem(AUTH_TOKEN_KEY);
 }
 
+export function getRefreshToken() {
+  return localStorage.getItem(AUTH_REFRESH_TOKEN_KEY);
+}
+
 export function isAuthenticated() {
   return Boolean(localStorage.getItem(AUTH_TOKEN_KEY));
 }
 
-export async function logoutUser() {
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+export async function refreshAuthToken() {
+  const user = getCurrentUser();
 
-  if (refreshToken) {
-    try {
-      await request("/auth/logout", {
-        method: "POST",
-        body: JSON.stringify({
-          refreshToken,
-        }),
-      });
-    } catch {
-      // Local logout should still happen even if backend logout fails.
-    }
+  if (!user) {
+    throw new Error("No active session.");
   }
 
+  return saveAuthSession(user);
+}
+
+export async function logoutUser() {
   localStorage.removeItem(AUTH_USER_KEY);
   localStorage.removeItem(AUTH_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem(ACCOUNT_ID_KEY);
+  localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
   localStorage.removeItem("dorabox:selectedProfileId");
+
+  notifyAuthChanged();
 }

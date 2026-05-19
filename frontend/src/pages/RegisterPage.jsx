@@ -6,7 +6,7 @@ const accountPlans = [
   {
     id: "basic",
     title: "Basic",
-    description: "Single user account with a simple setup.",
+    description: "Single user account with one main profile.",
   },
   {
     id: "family",
@@ -16,7 +16,7 @@ const accountPlans = [
   {
     id: "premium",
     title: "Premium",
-    description: "Extended access and advanced account features.",
+    description: "Extended access with one main profile for this demo.",
   },
 ];
 
@@ -28,10 +28,15 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    accountType: "family",
+    accountType: "basic",
   });
 
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (event) => {
+    setError("");
+
     setForm((prev) => ({
       ...prev,
       [event.target.name]: event.target.value,
@@ -41,13 +46,33 @@ export default function RegisterPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (loading) return;
+
+    setError("");
+
     if (form.password !== form.confirmPassword) {
-      alert("Passwords do not match.");
+      setError("Passwords do not match.");
       return;
     }
 
-    await registerUser(form);
-    navigate("/profiles");
+    setLoading(true);
+
+    try {
+      await registerUser(form);
+      navigate("/profiles");
+    } catch (err) {
+      console.error("Registration failed:", err);
+
+      const message = err?.message || "Registration failed.";
+
+      if (message.includes("email already in use")) {
+        setError("This email is already registered. Please sign in instead.");
+      } else {
+        setError(message);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -114,7 +139,9 @@ export default function RegisterPage() {
               <button
                 key={plan.id}
                 type="button"
-                className={`plan-card ${form.accountType === plan.id ? "selected" : ""}`}
+                className={`plan-card ${
+                  form.accountType === plan.id ? "selected" : ""
+                }`}
                 onClick={() =>
                   setForm((prev) => ({
                     ...prev,
@@ -128,8 +155,10 @@ export default function RegisterPage() {
             ))}
           </div>
 
-          <button type="submit" className="primary-btn">
-            Register
+          {error ? <div className="form-error">{error}</div> : null}
+
+          <button type="submit" className="primary-btn" disabled={loading}>
+            {loading ? "Registering..." : "Register"}
           </button>
         </form>
       </div>
