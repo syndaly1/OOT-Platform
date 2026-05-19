@@ -14,6 +14,7 @@ import (
 	contentpb "streaming-platform/proto/content"
 	playbackpb "streaming-platform/proto/playback"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -81,6 +82,9 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
+
+	// Prometheus metrics route
+	mux.Handle("GET /metrics", promhttp.Handler())
 
 	// Auth routes
 	mux.HandleFunc("POST /api/auth/register", g.register)
