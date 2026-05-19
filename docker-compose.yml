@@ -158,12 +158,14 @@ services:
       AUTH_SERVICE_URL: auth-service:50051
       CONTENT_SERVICE_URL: content-service:50052
       PLAYBACK_SERVICE_URL: playback-service:50053
+      OTEL_EXPORTER_OTLP_ENDPOINT: tempo:4318
     ports:
       - "8080:8080"
     depends_on:
       - auth-service
       - content-service
       - playback-service
+      - tempo
 
   prometheus:
     image: prom/prometheus:latest
@@ -176,8 +178,6 @@ services:
       - "9090:9090"
     depends_on:
       - cadvisor
-      - api-gateway
-      - nats
 
   grafana:
     image: grafana/grafana:latest

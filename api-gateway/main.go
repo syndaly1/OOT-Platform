@@ -14,6 +14,7 @@ import (
 	contentpb "streaming-platform/proto/content"
 	playbackpb "streaming-platform/proto/playback"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -28,23 +29,43 @@ type gateway struct {
 }
 
 func main() {
+	ctx := context.Background()
+	shutdownTracing := initTracer(ctx, "api-gateway")
+	defer func() {
+		if err := shutdownTracing(ctx); err != nil {
+			log.Printf("failed to shutdown tracer: %v", err)
+		}
+	}()
+
 	authAddr := getenv("AUTH_SERVICE_URL", "localhost:50051")
 	contentAddr := getenv("CONTENT_SERVICE_URL", "localhost:50052")
 	playbackAddr := getenv("PLAYBACK_SERVICE_URL", "localhost:50053")
 
-	authConn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	authConn, err := grpc.NewClient(
+		authAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		log.Fatal("auth grpc connect:", err)
 	}
 	defer authConn.Close()
 
-	contentConn, err := grpc.NewClient(contentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	contentConn, err := grpc.NewClient(
+		contentAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		log.Fatal("content grpc connect:", err)
 	}
 	defer contentConn.Close()
 
-	playbackConn, err := grpc.NewClient(playbackAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	playbackConn, err := grpc.NewClient(
+		playbackAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		log.Fatal("playback grpc connect:", err)
 	}
@@ -118,7 +139,9 @@ func main() {
 	addr := ":" + getenv("PORT", "8080")
 	log.Printf("api-gateway listening on %s", addr)
 
-	if err := http.ListenAndServe(addr, withCORS(mux)); err != nil {
+	handler := traceHTTPHandler(withCORS(mux), "api-gateway-http")
+
+	if err := http.ListenAndServe(addr, handler); err != nil {
 		log.Fatal("http serve:", err)
 	}
 }
